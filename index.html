@@ -471,68 +471,47 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
     </div>
     <div class="share-body">
 
+      <p style="font-size:13px;color:var(--text);font-weight:600;margin-bottom:4px">Para os colegas é simples:</p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">Não precisa criar conta, não precisa instalar nada. Só abrir o link abaixo no navegador.</p>
+      <div class="url-box" id="share-url-box" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="copyShareUrl()" title="Clique para copiar">
+        <span id="share-url-text">https://vaesquivel.github.io/banco-de-horas/</span>
+        <span style="font-size:10px;color:var(--muted2);white-space:nowrap;flex-shrink:0">📋 copiar</span>
+      </div>
+      <div id="share-copy-ok" style="display:none;font-size:11px;color:var(--green);margin-top:6px">✓ Link copiado!</div>
+
+      <hr class="share-divider"/>
+
       <div class="share-step">
         <div class="step-num">1</div>
         <div class="step-content">
-          <h3>Crie um repositório no GitHub</h3>
-          <p>Acesse <strong>github.com</strong>, clique em <strong>New repository</strong>, dê o nome <code>banco-de-horas</code> e deixe como <strong>Public</strong>.</p>
+          <h3>Envie o link pelo WhatsApp ou e-mail</h3>
+          <p>Cada colega abre o link no celular ou computador. Na primeira vez o app pede <strong>nome</strong>, <strong>horário</strong> e dias habituais de HO.</p>
+          <div class="step-note">💡 Os dados ficam salvos só no navegador de cada um — ninguém vê os dados de ninguém.</div>
         </div>
       </div>
 
       <div class="share-step">
         <div class="step-num">2</div>
         <div class="step-content">
-          <h3>Envie os 4 arquivos</h3>
-          <p>Na página do repositório, clique em <strong>"uploading an existing file"</strong> e suba:</p>
-          <p style="margin-top:6px"><code>index.html</code> &nbsp;<code>manifest.json</code> &nbsp;<code>sw.js</code> &nbsp;<code>icon.svg</code></p>
-          <p style="margin-top:6px">Clique em <strong>Commit changes</strong>.</p>
+          <h3>Favorite para acesso rápido</h3>
+          <p>Peça para cada colega salvar nos favoritos: <strong>Ctrl+D</strong> (Chrome/Edge) ou <strong>⌘+D</strong> (Mac).</p>
+          <div class="step-tip">⚡ No celular: "Adicionar à tela inicial" para abrir como app.</div>
         </div>
       </div>
 
       <div class="share-step">
         <div class="step-num">3</div>
         <div class="step-content">
-          <h3>Ative o GitHub Pages</h3>
-          <p>Em <strong>Settings → Pages</strong>, selecione <em>Deploy from branch → main → / (root)</em> e salve. Em 1–2 minutos o link fica disponível:</p>
-          <div class="url-box">https://SEU-USUARIO.github.io/banco-de-horas/</div>
-        </div>
-      </div>
-
-      <div class="share-step">
-        <div class="step-num">4</div>
-        <div class="step-content">
-          <h3>Compartilhe o link</h3>
-          <p>Envie a URL para os colegas. Cada um acessa pelo navegador — sem instalar nada.</p>
-          <div class="step-note">💡 Na primeira vez, o app pede nome, horário e dias de HO de cada pessoa.</div>
+          <h3>Importar PDF do banco de horas (opcional)</h3>
+          <p>Quem tiver o PDF do cartão de ponto pode importar na configuração inicial para ver o histórico desde janeiro. Clique em <strong>✎ editar</strong> para acessar o fluxo de importação a qualquer momento.</p>
         </div>
       </div>
 
       <hr class="share-divider"/>
 
-      <div class="share-step">
-        <div class="step-num">⭐</div>
-        <div class="step-content">
-          <h3>Favorite no navegador</h3>
-          <p>Para acesso rápido, peça para cada colega adicionar o link aos favoritos: <strong>Ctrl+D</strong> (Chrome/Edge) ou <strong>⌘+D</strong> (Mac). O app também pode ser instalado como PWA — clique no ícone de instalação na barra de endereços.</p>
-          <div class="step-tip">⚡ Dica: Pin o favorito na barra de favoritos para ter o app sempre visível.</div>
-        </div>
-      </div>
-
-      <div class="share-step">
-        <div class="step-num">📄</div>
-        <div class="step-content">
-          <h3>Importar dados do PDF</h3>
-          <p>Cada colega pode importar o PDF do banco de horas anterior ao abrir o app pela primeira vez. O app lê o PDF automaticamente e preenche os meses jan–jun como histórico. Clique em <strong>✎ editar</strong> → o fluxo de importação fica disponível ali também.</p>
-        </div>
-      </div>
-
-      <div class="share-step">
-        <div class="step-num">🔄</div>
-        <div class="step-content">
-          <h3>Atualizar o app no futuro</h3>
-          <p>Quando houver uma nova versão do <code>index.html</code>, basta substituir o arquivo no GitHub — todos os colegas recebem a atualização automaticamente na próxima abertura.</p>
-        </div>
-      </div>
+      <p style="font-size:11px;color:var(--muted2);line-height:1.6">
+        <strong style="color:var(--muted)">Só você precisa saber:</strong> o app fica hospedado no GitHub Pages no repositório <code>vaesquivel/banco-de-horas</code>. Para atualizar o app no futuro, basta substituir o <code>index.html</code> lá — todos recebem a nova versão automaticamente.
+      </p>
 
     </div>
     <div class="share-footer">
@@ -1043,6 +1022,14 @@ function showShareGuide(){ document.getElementById('share-overlay').classList.ad
 function closeShare(e){
   if(e&&e.target!==document.getElementById('share-overlay'))return;
   document.getElementById('share-overlay').classList.remove('open');
+}
+function copyShareUrl(){
+  const url=document.getElementById('share-url-text').textContent;
+  navigator.clipboard.writeText(url).then(()=>{
+    const ok=document.getElementById('share-copy-ok');
+    ok.style.display='block';
+    setTimeout(()=>ok.style.display='none',2000);
+  }).catch(()=>showToast('Copie o link manualmente'));
 }
 
 /* ── PDF IMPORT ── */
