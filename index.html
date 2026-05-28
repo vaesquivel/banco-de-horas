@@ -306,10 +306,10 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 
       <div id="pdf-drop-zone" onclick="document.getElementById('pdf-file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
         <div class="drop-icon">📂</div>
-        <div class="drop-text">Arraste o PDF aqui ou <strong>clique para selecionar</strong></div>
-        <div class="drop-sub">Arquivo exportado do sistema de ponto corporativo</div>
+        <div class="drop-text">Arraste os PDFs aqui ou <strong>clique para selecionar</strong></div>
+        <div class="drop-sub">Selecione vários arquivos de uma vez (jan, fev, mar…)</div>
       </div>
-      <input type="file" id="pdf-file-input" accept=".pdf" onchange="handlePDFFile(this.files[0])"/>
+      <input type="file" id="pdf-file-input" accept=".pdf" multiple onchange="handlePDFFiles(this.files)"/>
 
       <div id="pdf-parse-error" class="pdf-err" style="display:none"></div>
       <div id="pdf-parse-warn" class="pdf-warn"></div>
@@ -1002,23 +1002,55 @@ function closeShare(e){
 /* ── PDF IMPORT ── */
 function handleDragOver(e){ e.preventDefault(); document.getElementById('pdf-drop-zone').classList.add('drag-over'); }
 function handleDragLeave(){ document.getElementById('pdf-drop-zone').classList.remove('drag-over'); }
-function handleDrop(e){ e.preventDefault(); handleDragLeave(); if(e.dataTransfer.files[0]) handlePDFFile(e.dataTransfer.files[0]); }
+function handleDrop(e){ e.preventDefault(); handleDragLeave(); if(e.dataTransfer.files.length) handlePDFFiles(e.dataTransfer.files); }
 
-async function handlePDFFile(file) {
-  if(!file||!file.name.endsWith('.pdf')){ showPDFError('Selecione um arquivo PDF.'); return; }
+async function handlePDFFiles(files) {
+  const pdfs = [...files].filter(f=>f.name.toLowerCase().endsWith('.pdf'));
+  if(!pdfs.length){ showPDFError('Selecione ao menos um arquivo PDF.'); return; }
   hidePDFError();
-  document.getElementById('pdf-drop-zone').querySelector('.drop-text').textContent='⏳ Lendo PDF…';
+  document.getElementById('pdf-drop-zone').querySelector('.drop-text').textContent=`⏳ Lendo ${pdfs.length} PDF(s)…`;
   try {
-    const recs = await parsePDF(file);
-    pendingPDFRecords = recs;
-    showPDFResult(recs);
+    let allRecs = [];
+    let latestSaldo = null;
+    let latestPeriodoEnd = null;
+
+    for(const file of pdfs){
+      const result = await parseSunsetCliffPDF(file);
+      // Merge records (deduplicate by date)
+      result.records.forEach(r=>{
+        if(!allRecs.find(x=>x.date===r.date)) allRecs.push(r);
+      });
+      // Keep saldo from the most recent period
+      if(result.periodoEnd){
+        if(!latestPeriodoEnd || result.periodoEnd > latestPeriodoEnd){
+          latestPeriodoEnd = result.periodoEnd;
+          latestSaldo = result.saldoAtual;
+        }
+      }
+    }
+
+    allRecs.sort((a,b)=>a.date.localeCompare(b.date));
+    pendingPDFRecords = allRecs;
+
+    // Auto-fill opening balance from PDF
+    if(latestSaldo){
+      let balMin = latestSaldo.min;
+      // A PAGAR = overtime paid in cash, not banked hours → treat as 0 for bank
+      if(latestSaldo.status.includes('PAGAR')) balMin = 0;
+      // A COMPENSAR = bank hours (positive)
+      const sign = latestSaldo.status.includes('COMPENSAR') ? '+' : '-';
+      document.getElementById('inp-ob').value=`${sign}${pad(Math.floor(balMin/60))}:${pad(balMin%60)}`;
+    }
+
+    showPDFResult(allRecs, pdfs.length);
   } catch(err) {
     showPDFError('Não foi possível ler o PDF: '+(err.message||err));
-    document.getElementById('pdf-drop-zone').querySelector('.drop-text').innerHTML='Arraste o PDF aqui ou <strong>clique para selecionar</strong>';
+    document.getElementById('pdf-drop-zone').querySelector('.drop-text').innerHTML='Arraste os PDFs aqui ou <strong>clique para selecionar</strong>';
   }
 }
 
-async function parsePDF(file) {
+/* Parser específico para o Cartão de Ponto da Sunset Cliff / Mr.Cat */
+async function parseSunsetCliffPDF(file) {
   if(!window.pdfjsLib) throw new Error('PDF.js não carregado. Verifique a conexão e recarregue.');
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:buf}).promise;
@@ -1026,91 +1058,120 @@ async function parsePDF(file) {
   for(let i=1;i<=pdf.numPages;i++){
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    // Group items by approximate Y position to form lines
     const byY = {};
     content.items.forEach(item=>{
-      const y = Math.round(item.transform[5]/4)*4;
+      const y = Math.round(item.transform[5]/3)*3;
       if(!byY[y]) byY[y]=[];
       byY[y].push({x:item.transform[4], str:item.str});
     });
-    Object.keys(byY).sort((a,b)=>b-a).forEach(y=>{
+    Object.keys(byY).sort((a,b)=>Number(b)-Number(a)).forEach(y=>{
       const sorted=byY[y].sort((a,b)=>a.x-b.x);
-      lines.push(sorted.map(i=>i.str).join(' '));
+      lines.push(sorted.map(i=>i.str).join(' ').trim());
     });
   }
-  return extractRecordsFromLines(lines);
+  return parseSunsetCliffLines(lines);
 }
 
-function extractRecordsFromLines(lines) {
-  const recs = [];
-  const dateRE  = /\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/;
-  const timeRE  = /\b(\d{1,2}):(\d{2})\b/g;
-  const faltaRE = /falta|ausên|ausenc/i;
-  const ferRE   = /feriado|folga|facultat/i;
-  const abonoRE = /abono|banco|compens|licença|licenca|atestado|médico|medico/i;
-  const hoRE    = /home.?office|remoto|teletra/i;
+function parseSunsetCliffLines(lines) {
+  const records = [];
+  let saldoAtual = null;
+  let periodoEnd = null;
 
-  let lastYear = new Date().getFullYear();
+  // Regex para linha de dia: DD/MM/YYYY + DOW
+  const DAY_RE = /^(\d{2})\/(\d{2})\/(\d{4})\s+(DOM|SEG|TER|QUA|QUI|SEX|SAB)\s*(.*)/i;
+
+  // Período do cartão: "Período: DD/MM/YYYY à DD/MM/YYYY"
+  const PERIODO_RE = /per[íi]odo[^:]*:\s*(\d{2})\/(\d{2})\/(\d{4})\s+[àa]\s+(\d{2})\/(\d{2})\/(\d{4})/i;
+
+  // Saldo atual no rodapé
+  const SALDO_RE = /saldo de horas atual[^:]*:\s*(\d+):(\d{2})\s*\(([^)]+)\)/i;
 
   lines.forEach(line=>{
-    const dm = line.match(dateRE);
+    // Captura período
+    const pm = line.match(PERIODO_RE);
+    if(pm){ periodoEnd = `${pm[6]}-${pm[5]}-${pm[4]}`; return; }
+
+    // Captura saldo atual
+    const sm = line.match(SALDO_RE);
+    if(sm){
+      saldoAtual = { min: parseInt(sm[1])*60+parseInt(sm[2]), status: sm[3].toUpperCase() };
+      return;
+    }
+
+    // Linha de dia
+    const dm = line.match(DAY_RE);
     if(!dm) return;
-    let day=parseInt(dm[1]),month=parseInt(dm[2]),year=lastYear;
-    if(dm[3]){year=parseInt(dm[3]);if(year<100)year+=2000;}
-    lastYear=year;
-    if(day<1||day>31||month<1||month>12) return;
-    const ds=`${year}-${pad(month)}-${pad(day)}`;
-    const dow=new Date(ds+'T12:00:00').getDay();
-    if(dow===0||dow===6) return; // skip weekends
 
-    // Extract all times from line
-    const times=[];
-    let tm;
-    const re=new RegExp(timeRE.source,'g');
-    while((tm=re.exec(line))!==null){
-      const h=parseInt(tm[1]),m=parseInt(tm[2]);
-      if(h>=0&&h<=23&&m>=0&&m<=59) times.push(`${pad(h)}:${pad(m)}`);
+    const [,dd,mm,yyyy,dow,rest] = dm;
+    if(dow==='DOM'||dow==='SAB') return; // fim de semana
+    const ds = `${yyyy}-${mm}-${dd}`;
+
+    let type=null, entry=null, exit=null, note='', isHO=false;
+
+    // --- Férias ---
+    if(/f[eé]rias/i.test(rest)){
+      type='abono'; note='Férias';
+    } else {
+      // Horários de ponto: HH:MM NÃO seguido de letra C/P/D
+      // (os valores de banco têm sufixo, ex: 09:34C, 00:58C)
+      const clockTimes=[];
+      const ctRe=/\b(\d{1,2}):(\d{2})\b(?![CPDcpd])/g;
+      let m;
+      while((m=ctRe.exec(rest))!==null){
+        const h=parseInt(m[1]),min=parseInt(m[2]);
+        // Horário razoável de ponto (06:00–23:00) e não parece valor de abono isolado sem ponto
+        if(h>=6&&h<=23&&min>=0&&min<=59) clockTimes.push(`${pad(h)}:${pad(min)}`);
+      }
+
+      // Valores de banco (com sufixo C=compensado, P=pago, D=desconto)
+      const bankRe=/\b(\d+):(\d{2})([CPDcpd])\b/g;
+      let hasDesconto=false, hasAbono=false;
+      while((m=bankRe.exec(rest))!==null){
+        const suffix=m[3].toUpperCase();
+        if(suffix==='D') hasDesconto=true;
+      }
+
+      // Abono full-day: 09:00 ou 08:59 SEM horário de ponto (= coluna Abono preenchida)
+      const abonoValRe=/\b(09:00|08:59)\b(?![CPDcpd])/;
+      if(clockTimes.length===0 && abonoValRe.test(rest)) hasAbono=true;
+
+      if(clockTimes.length>=2){
+        type='worked';
+        entry=clockTimes[0];
+        exit=clockTimes[clockTimes.length-1];
+      } else if(hasAbono){
+        type='abono'; note='Abono';
+      } else if(clockTimes.length===0 && (hasDesconto || /\b\d+:\d{2}[CPDcpd]\b/.test(rest))){
+        // Tem valores de banco mas sem horário de ponto = falta ou abono
+        type = hasDesconto ? 'absent' : 'abono';
+      } else if(clockTimes.length===0){
+        // Linha sem nada = feriado ou dia sem registro — não importa
+        return;
+      } else {
+        // 1 horário apenas — registro incompleto, ignora
+        return;
+      }
     }
 
-    let type='absent', entry=null, exit=null, note='', isHO=false;
-
-    if(faltaRE.test(line)){
-      type='absent';
-    } else if(ferRE.test(line)){
-      type='holiday'; note='Feriado';
-    } else if(abonoRE.test(line)){
-      type='abono'; note='Abono';
-    } else if(hoRE.test(line)){
-      type='abono'; note='Home Office'; isHO=true;
-    } else if(times.length>=2){
-      type='worked';
-      // find entry/exit: smallest and largest or first/last
-      const sorted=[...times].sort();
-      entry=sorted[0]; exit=sorted[sorted.length-1];
-      if(hoRE.test(line)){isHO=true;note='Home Office';}
-    } else if(times.length===1){
-      type='worked'; entry=times[0];
-    }
-
-    // Avoid duplicates
-    if(!recs.find(r=>r.date===ds)) {
-      recs.push({date:ds,type,entry,exit,note,isHO});
+    if(!records.find(r=>r.date===ds)){
+      records.push({date:ds,type,entry,exit,note,isHO});
     }
   });
 
-  recs.sort((a,b)=>a.date.localeCompare(b.date));
-  return recs;
+  records.sort((a,b)=>a.date.localeCompare(b.date));
+  return { records, saldoAtual, periodoEnd };
 }
 
-function showPDFResult(recs) {
-  document.getElementById('pdf-drop-zone').querySelector('.drop-text').innerHTML='✅ PDF lido com sucesso';
+function showPDFResult(recs, numFiles) {
+  const n = numFiles||1;
+  document.getElementById('pdf-drop-zone').querySelector('.drop-text').innerHTML=`✅ ${n} PDF(s) lido(s) com sucesso`;
   const tbody=document.getElementById('pdf-preview-body');
   tbody.innerHTML='';
   const typeLabel={worked:'Trabalhado',abono:'Abono',holiday:'Feriado',absent:'Falta'};
   recs.forEach(r=>{
     const[y,m,d]=r.date.split('-');
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${d}/${m}/${y}</td><td>${r.entry||'—'}</td><td>${r.exit||'—'}</td><td>${typeLabel[r.type]||r.type}${r.isHO?' 🏠':''}</td>`;
+    tr.innerHTML=`<td>${d}/${m}/${y}</td><td>${r.entry||'—'}</td><td>${r.exit||'—'}</td><td>${typeLabel[r.type]||r.type}${r.note?' · '+r.note:''}${r.isHO?' 🏠':''}</td>`;
     tbody.appendChild(tr);
   });
   document.getElementById('pdf-result-title').textContent=`${recs.length} registros encontrados`;
@@ -1120,7 +1181,7 @@ function showPDFResult(recs) {
   document.getElementById('btn-skip-import').textContent='Pular e começar do zero (julho)';
   if(recs.length===0){
     document.getElementById('pdf-parse-warn').style.display='block';
-    document.getElementById('pdf-parse-warn').textContent='⚠️ Nenhum registro reconhecido. O formato do PDF pode não ser compatível. Você pode começar do zero ou tentar outro arquivo.';
+    document.getElementById('pdf-parse-warn').textContent='⚠️ Nenhum registro reconhecido. Tente outro arquivo ou comece do zero.';
     document.getElementById('btn-confirm-import').style.display='none';
     document.getElementById('ob-row').style.display='none';
   }
