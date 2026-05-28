@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icon.svg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root {
@@ -27,7 +27,7 @@
   --slate:#475569; --slate-bg:#f1f5f9; --slate-bd:#cbd5e1;
   --row-worked:rgba(22,163,74,.03); --row-abono:rgba(37,99,235,.03);
   --row-holiday:rgba(124,58,237,.03); --row-absent:rgba(220,38,38,.04);
-  --sans:'Plus Jakarta Sans',sans-serif; --display:'Syne',sans-serif; --mono:'JetBrains Mono',monospace;
+  --sans:'Plus Jakarta Sans',sans-serif; --display:'Manrope',sans-serif; --mono:'JetBrains Mono',monospace;
   --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
   --shadow-md:0 4px 20px rgba(0,0,0,.1); --r:10px;
 }
@@ -39,7 +39,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 #header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 0 var(--border),0 2px 12px rgba(0,0,0,.05)}
 #header-inner{max-width:1040px;margin:0 auto;padding:20px 28px 0}
 #header-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:18px;padding-bottom:16px}
-h1{font-family:var(--display);font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.03em;display:flex;align-items:center;gap:10px}
+h1{font-family:var(--display);font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
 h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#2055d4,#7c3aed);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .subtitle{font-size:12px;color:var(--muted);margin-top:5px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .hdr-actions{display:flex;align-items:center;gap:8px}
@@ -167,7 +167,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 #setup-overlay{position:fixed;inset:0;background:rgba(28,25,23,.45);backdrop-filter:blur(6px);z-index:800;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 #setup-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:36px 32px;width:100%;max-width:460px;box-shadow:0 24px 80px rgba(0,0,0,.15);animation:modalIn .2s ease;margin:auto}
 .setup-icon{width:48px;height:48px;background:linear-gradient(135deg,rgba(32,85,212,.1),rgba(124,58,237,.1));border:1px solid rgba(32,85,212,.18);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px}
-.setup-title{font-family:var(--display);font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:-.03em}
+.setup-title{font-family:var(--display);font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:-.02em}
 .setup-desc{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
 .setup-section-label{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted2);font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:block}
 .ho-days-grid{display:flex;gap:6px;flex-wrap:wrap}
@@ -232,6 +232,14 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 .share-divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 .share-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
 .url-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--accent);margin-top:8px;word-break:break-all}
+
+/* ── FOOTER ── */
+#app-footer{max-width:1040px;margin:0 auto;padding:20px 28px 36px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid var(--border)}
+.footer-credit{display:flex;align-items:center;gap:10px}
+.footer-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2055d4,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;font-family:var(--display);letter-spacing:.01em}
+.footer-text{font-size:11px;color:var(--muted);line-height:1.5}
+.footer-text strong{color:var(--text);font-weight:600}
+.footer-tag{font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--muted);font-weight:500;white-space:nowrap}
 
 /* ── RESPONSIVE ── */
 @media(max-width:680px){
@@ -398,6 +406,18 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
   <div id="weeks-container"></div>
   <div id="empty-msg">Nenhum dia útil neste mês.</div>
 </div>
+
+<!-- ── FOOTER ── -->
+<footer id="app-footer">
+  <div class="footer-credit">
+    <div class="footer-avatar">VC</div>
+    <div class="footer-text">
+      Criado por <strong>Vanessa Costa</strong> · Mr.Cat · 2026<br/>
+      <span style="color:var(--muted2)">Desenvolvido com <span style="color:#e05a2b;font-weight:600">Claude IA</span> · Anthropic</span>
+    </div>
+  </div>
+  <span class="footer-tag">⏱ Banco de Horas v1.0</span>
+</footer>
 
 <!-- ── MODAL registro ── -->
 <div id="overlay" class="overlay-wrap" onclick="closeModal(event)">
