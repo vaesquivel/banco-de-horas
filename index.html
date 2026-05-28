@@ -394,10 +394,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
     </div>
     <span class="hint-text">👆 Clique em qualquer dia para registrar</span>
   </div>
-  <div id="hist-banner">
-    <span>📋 <strong>Histórico importado</strong> — meses anteriores à virada de folha (somente leitura)</span>
-    <button class="btn-ghost" style="white-space:nowrap" onclick="clearHistory()">Limpar histórico</button>
-  </div>
+  <div id="hist-banner" style="display:none"></div>
   <div id="weeks-container"></div>
   <div id="empty-msg">Nenhum dia útil neste mês.</div>
 </div>
@@ -535,10 +532,8 @@ const MONTHS_S = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','N
 const DAYS_PT  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const DATA_KEY  = 'bdh_data_v1';
 const SETUP_KEY = 'bdh_setup_v1';
-const HIST_KEY  = 'bdh_hist_v1';
 
 let records        = [];
-let histRecords    = [];
 let setup          = null;
 let selMonth       = new Date().getMonth();
 let selYear        = new Date().getFullYear();
@@ -632,27 +627,35 @@ function backToStep1() {
   updateStepDots(1);
 }
 
-function commitSetup(openingBalance, histImport) {
+function commitSetup(openingBalance, importedRecords) {
   const name  = document.getElementById('setup-name').value.trim();
-  const date  = document.getElementById('setup-date').value;
   const entry = document.getElementById('setup-entry').value||'10:00';
   const exit  = document.getElementById('setup-exit').value||'19:00';
-  setup={ name, startDate:date, entryTime:entry, exitTime:exit,
-          hoDays:[...selectedHODays].sort((a,b)=>a-b),
-          openingBalance: openingBalance||0 };
+  // If importing from PDF, startDate = first record date; otherwise use the date field
+  const startDate = (importedRecords && importedRecords.length)
+    ? importedRecords[0].date
+    : (document.getElementById('setup-date').value || julyStart());
+  setup = { name, startDate, entryTime:entry, exitTime:exit,
+            hoDays:[...selectedHODays].sort((a,b)=>a-b),
+            openingBalance: openingBalance||0 };
   localStorage.setItem(SETUP_KEY,JSON.stringify(setup));
-  if(histImport&&histImport.length){
-    histRecords=histImport;
-    localStorage.setItem(HIST_KEY,JSON.stringify(histRecords));
+  if(importedRecords && importedRecords.length){
+    // Imported records go directly into the main records array
+    records = [...importedRecords];
+    save();
   }
   document.getElementById('setup-overlay').style.display='none';
-  applySetup(); load(); render();
-  showToast('✓ Configuração salva');
+  applySetup();
+  if(!importedRecords || !importedRecords.length) load();
+  render();
+  showToast(importedRecords && importedRecords.length
+    ? `✓ ${importedRecords.length} registros importados`
+    : '✓ Configuração salva');
 }
 
 function finishSetupWithImport() {
-  const ob = parseBalStr(document.getElementById('inp-ob').value);
-  commitSetup(ob, pendingPDFRecords);
+  if(!pendingPDFRecords.length){showToast('Nenhum registro para importar');return;}
+  commitSetup(0, pendingPDFRecords);
 }
 
 function finishSetupSkipImport() {
@@ -714,8 +717,6 @@ function applySetup() {
 
 function checkAndInit() {
   loadSetup();
-  loadHistory();
-  const now=new Date();
   const js=julyStart();
   document.getElementById('setup-date').value=js;
   // Restore button state
@@ -735,17 +736,6 @@ function load() {
 }
 function save() { try{localStorage.setItem(DATA_KEY,JSON.stringify(records));}catch{} }
 
-function loadHistory() {
-  try{const s=localStorage.getItem(HIST_KEY);histRecords=s?JSON.parse(s):[];}catch{histRecords=[];}
-}
-
-function clearHistory() {
-  if(!confirm('Remover todo o histórico importado?')) return;
-  histRecords=[];
-  localStorage.removeItem(HIST_KEY);
-  render();
-  showToast('Histórico removido');
-}
 
 function showToast(msg) {
   const t=document.getElementById('toast');
@@ -778,34 +768,25 @@ function getWeekdays(year,month){
   return days;
 }
 
-/* Is this month/year in the historical period (before startDate)? */
-function isHistMonth(year, month) {
-  if(!setup)return false;
-  const[sy,sm]=setup.startDate.split('-').map(Number);
-  return year<sy||(year===sy&&month<sm-1);
-}
-
 /* ── RENDER ── */
 function render(){
   const today=todayStr();
-  const isHist=isHistMonth(selYear,selMonth);
-  const activeMap=getRMap(records);
-  const histMap=getRMap(histRecords);
-  const rmap=isHist?histMap:activeMap;
+  const rmap=getRMap(records);
+  const startDs=setup?.startDate;
 
   const weekdays=getWeekdays(selYear,selMonth);
   let monthBal=0,nWorked=0,nAbono=0,nHol=0,nAbs=0;
   weekdays.forEach(ds=>{
-    if(!isHist&&ds>today)return;
+    if(ds>today)return;
+    if(startDs&&ds<startDs)return; // before tracking start — don't count
     const r=rmap[ds];
-    if(isHist&&!r)return; // no auto-absent for history
     const type=r?.type||'absent';
-    const b=r?getBalance(r):(isHist?null:-WORK_MIN);
+    const b=r?getBalance(r):-WORK_MIN;
     if(b!==null)monthBal+=b;
     if(type==='worked')nWorked++;
     else if(type==='abono')nAbono++;
     else if(type==='holiday')nHol++;
-    else if(!isHist)nAbs++;
+    else nAbs++;
   });
 
   const cum=computeCumulative();
@@ -828,31 +809,26 @@ function render(){
 
   // Month tabs
   const tabs=document.getElementById('month-tabs'); tabs.innerHTML='';
-  const histMonths=new Set(histRecords.map(r=>r.date.substring(0,7)));
   MONTHS_S.forEach((m,i)=>{
     const b=document.createElement('button');
-    const isHistM=setup?isHistMonth(selYear,i):false;
-    const hasHist=[...histMonths].some(ym=>{const[y,mo]=ym.split('-');return parseInt(mo)-1===i;});
-    b.className='mtab'+(i===selMonth?' active':'')+(isHistM&&hasHist?' has-hist':'');
-    b.textContent=m+(isHistM&&hasHist?' 📋':'');
+    b.className='mtab'+(i===selMonth?' active':'');
+    b.textContent=m;
     b.onclick=()=>{selMonth=i;render();};
     tabs.appendChild(b);
   });
   tabs.querySelector('.active')?.scrollIntoView({block:'nearest',inline:'center'});
 
-  // Hist banner
-  const banner=document.getElementById('hist-banner');
-  banner.style.display=(isHist&&histRecords.length)?'flex':'none';
+  // Hide hist banner (no longer used)
+  document.getElementById('hist-banner').style.display='none';
 
   const container=document.getElementById('weeks-container'); container.innerHTML='';
   const emptyMsg=document.getElementById('empty-msg');
 
-  const relevantDays=isHist?weekdays.filter(ds=>rmap[ds]):weekdays;
-  if(!relevantDays.length){emptyMsg.style.display='block';return;}
+  if(!weekdays.length){emptyMsg.style.display='block';return;}
   emptyMsg.style.display='none';
 
   let groups=[],grp=[];
-  (isHist?relevantDays:weekdays).forEach((ds,i,arr)=>{
+  weekdays.forEach((ds,i,arr)=>{
     grp.push(ds);
     const dow=new Date(ds+'T12:00:00').getDay();
     if(dow===5||i===arr.length-1){groups.push(grp);grp=[];}
@@ -871,9 +847,9 @@ function render(){
   groups.forEach((week,wi)=>{
     let wBal=0;
     week.forEach(ds=>{
-      if(!isHist&&ds>today)return;
+      if(ds>today)return;
+      if(startDs&&ds<startDs)return;
       const r=rmap[ds];
-      if(isHist&&!r)return;
       const b=r?getBalance(r):-WORK_MIN;
       if(b!==null)wBal+=b;
     });
@@ -882,43 +858,43 @@ function render(){
     const fmtD  =d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
 
     const block=document.createElement('div');
-    block.className='week-block'+(isHist?' hist-block':'');
+    block.className='week-block';
     block.style.animationDelay=(wi*.05)+'s';
 
     const wh=document.createElement('div');
-    wh.className=`week-header ${isHist?'stripe-hist':wBal>0?'stripe-pos':wBal<0?'stripe-neg':'stripe-zer'}`;
-    wh.innerHTML=`<span class="week-label">Semana ${wi+1} · ${fmtD(wStart)} → ${fmtD(wEnd)}${isHist?' · histórico':''}</span>
-      <span class="week-bal ${isHist?'hist':wBal>0?'pos':wBal<0?'neg':'zer'}">${fmtBal(wBal)}</span>`;
+    wh.className=`week-header ${wBal>0?'stripe-pos':wBal<0?'stripe-neg':'stripe-zer'}`;
+    wh.innerHTML=`<span class="week-label">Semana ${wi+1} · ${fmtD(wStart)} → ${fmtD(wEnd)}</span>
+      <span class="week-bal ${wBal>0?'pos':wBal<0?'neg':'zer'}">${fmtBal(wBal)}</span>`;
     block.appendChild(wh);
 
     week.forEach(ds=>{
       const r=rmap[ds];
-      if(isHist&&!r)return;
       const isPast=ds<today,isToday=ds===today,isFuture=ds>today;
+      const isBeforeStart=!!(startDs&&ds<startDs);
       const d=new Date(ds+'T12:00:00'),dow=d.getDay(),hoDay=isHODay(dow);
-      const type=r?.type||(isFuture?'future':isPast?'absent':'today');
-      const balance=r?getBalance(r):(isPast?-WORK_MIN:null);
+      const type=r?.type||(isFuture||isBeforeStart?'future':isPast?'absent':'today');
+      const balance=r?getBalance(r):(isPast&&!isBeforeStart?-WORK_MIN:null);
       const wm=r?getWorked(r):null;
-      const needHO=hoDay&&(isFuture||isToday)&&!r;
-      const cfg=CFG[isToday&&!isHist?'today':isFuture&&!isHist?'future':type]||CFG.future;
+      const needHO=hoDay&&(isFuture||isToday)&&!r&&!isBeforeStart;
+      const cfg=CFG[isToday&&!isBeforeStart?'today':(isFuture||isBeforeStart)?'future':type]||CFG.future;
       const hoLabel=(r?.isHO||(hoDay&&(type==='abono'||type==='worked')))?'🏠 ':'';
 
       const row=document.createElement('div');
-      row.className='day-row'+(isToday&&!isHist?' today-row':'')+(isFuture&&!isHist?' future':'')+(isHist?' hist-row':'')+((!isFuture&&!isHist)?' clickable':'');
+      row.className='day-row'+(isToday&&!isBeforeStart?' today-row':'')+(isFuture||isBeforeStart?' future':'')+(!isFuture&&!isBeforeStart?' clickable':'');
       row.setAttribute('data-date',ds);
-      row.style.background=isHist?'':cfg.rowBg;
-      if(!isFuture&&!isHist) row.onclick=()=>openModal(ds,r||null);
+      row.style.background=(isFuture||isBeforeStart)?'transparent':cfg.rowBg;
+      if(!isFuture&&!isBeforeStart) row.onclick=()=>openModal(ds,r||null);
 
       row.innerHTML=`
-        <div class="dr-date" style="color:${isToday&&!isHist?'var(--amber)':isHist?'var(--slate)':'var(--text)'}">${pad(d.getDate())}/${pad(d.getMonth()+1)}</div>
-        <div class="dr-day"  style="color:${hoDay?'var(--amber)':'var(--muted)'};font-weight:${hoDay?600:400}">${DAYS_PT[dow]}</div>
-        <div class="dr-time">${r?.entry||(!isFuture?'—':'')}</div>
+        <div class="dr-date" style="color:${isToday&&!isBeforeStart?'var(--amber)':'var(--text)'}">${pad(d.getDate())}/${pad(d.getMonth()+1)}</div>
+        <div class="dr-day"  style="color:${hoDay&&!isBeforeStart?'var(--amber)':'var(--muted)'};font-weight:${hoDay&&!isBeforeStart?600:400}">${DAYS_PT[dow]}</div>
+        <div class="dr-time">${r?.entry||(!isFuture&&!isBeforeStart?'—':'')}</div>
         <div class="dr-arrow">→</div>
-        <div class="dr-time">${r?.exit||(!isFuture?'—':'')}</div>
-        <div class="dr-worked" style="color:${wm!==null?(wm>=WORK_MIN?'var(--green)':'var(--red)'):'var(--muted2)'}">${wm!==null?fmtWorked(wm):(isFuture&&!isHist?'':'—')}</div>
-        <div class="dr-chip">${(!isFuture||isHist)?`<span class="type-chip" style="color:${cfg.chip};background:${cfg.chipBg};border-color:${cfg.bd}">${hoLabel}${cfg.label}</span>`:''} ${needHO?'<span class="warn-chip">⚠️ HO</span>':''}</div>
+        <div class="dr-time">${r?.exit||(!isFuture&&!isBeforeStart?'—':'')}</div>
+        <div class="dr-worked" style="color:${wm!==null?(wm>=WORK_MIN?'var(--green)':'var(--red)'):'var(--muted2)'}">${wm!==null?fmtWorked(wm):(isFuture||isBeforeStart?'':'—')}</div>
+        <div class="dr-chip">${(!isFuture&&!isBeforeStart)?`<span class="type-chip" style="color:${cfg.chip};background:${cfg.chipBg};border-color:${cfg.bd}">${hoLabel}${cfg.label}</span>`:''} ${needHO?'<span class="warn-chip">⚠️ HO</span>':''}</div>
         <div class="dr-note">${r?.note||''}</div>
-        <div class="dr-bal" style="color:${balance!==null?balColor(balance):'var(--muted2)'}">${balance!==null?fmtBal(balance):(isFuture&&!isHist?'':'—')}</div>`;
+        <div class="dr-bal" style="color:${balance!==null?balColor(balance):'var(--muted2)'}">${balance!==null?fmtBal(balance):(isFuture||isBeforeStart?'':'—')}</div>`;
       block.appendChild(row);
     });
     container.appendChild(block);
@@ -1073,6 +1049,7 @@ function parseSunsetCliffItems(items) {
   const records = [];
   let saldoAtual = null;
   let periodoEnd = null;
+  let _saldoNextLine = false;
 
   const DATE_RE  = /^(\d{2})\/(\d{2})\/(\d{4})$/;
   const DOW_RE   = /^(DOM|SEG|TER|QUA|QUI|SEX|SAB)$/i;
@@ -1114,9 +1091,21 @@ function parseSunsetCliffItems(items) {
       return;
     }
 
-    // Captura saldo atual — linha pode conter vários saldos separados
+    // Captura saldo atual — label pode estar na mesma linha ou na linha acima do valor
     if(SALDO_ATUAL_RE.test(joined)){
-      // Pega último valor HHH:MM (STATUS) da linha — é o "Saldo Atual"
+      // Tenta pegar valor na mesma linha
+      const allMatches = [...joined.matchAll(/(\d+):(\d{2})\s*\(([^)]+)\)/g)];
+      if(allMatches.length){
+        const last = allMatches[allMatches.length-1];
+        saldoAtual = { min: parseInt(last[1])*60+parseInt(last[2]), status: last[3].toUpperCase() };
+      }
+      // Mesmo sem valor, marca flag para capturar na próxima linha
+      _saldoNextLine = !allMatches.length;
+      return;
+    }
+    // Linha seguinte ao label "Saldo de Horas Atual" — captura o valor
+    if(_saldoNextLine){
+      _saldoNextLine = false;
       const allMatches = [...joined.matchAll(/(\d+):(\d{2})\s*\(([^)]+)\)/g)];
       if(allMatches.length){
         const last = allMatches[allMatches.length-1];
@@ -1205,14 +1194,13 @@ function showPDFResult(recs, numFiles) {
   });
   document.getElementById('pdf-result-title').textContent=`${recs.length} registros encontrados`;
   document.getElementById('pdf-result').style.display='block';
-  document.getElementById('ob-row').style.display='flex';
+  document.getElementById('ob-row').style.display='none'; // ob not needed for PDF path
   document.getElementById('btn-confirm-import').style.display='block';
   document.getElementById('btn-skip-import').textContent='Pular e começar do zero (julho)';
   if(recs.length===0){
     document.getElementById('pdf-parse-warn').style.display='block';
     document.getElementById('pdf-parse-warn').textContent='⚠️ Nenhum registro reconhecido. Tente outro arquivo ou comece do zero.';
     document.getElementById('btn-confirm-import').style.display='none';
-    document.getElementById('ob-row').style.display='none';
   }
 }
 
@@ -1231,7 +1219,7 @@ function clearPDFImport(){
   document.getElementById('ob-row').style.display='none';
   document.getElementById('btn-confirm-import').style.display='none';
   document.getElementById('btn-skip-import').textContent='Começar do zero (julho) →';
-  document.getElementById('pdf-drop-zone').querySelector('.drop-text').innerHTML='Arraste o PDF aqui ou <strong>clique para selecionar</strong>';
+  document.getElementById('pdf-drop-zone').querySelector('.drop-text').innerHTML='Arraste os PDFs aqui ou <strong>clique para selecionar</strong>';
   hidePDFError();
   document.getElementById('pdf-file-input').value='';
 }
