@@ -1,4 +1,4 @@
-const CACHE = 'bdh-v1';
+const CACHE = 'bdh-v3';
 const URLS  = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', ev => {
@@ -21,6 +21,20 @@ self.addEventListener('activate', ev => {
 
 self.addEventListener('fetch', ev => {
   if (ev.request.method !== 'GET') return;
+  // Network first para o index.html — sempre pega versão mais recente
+  if (ev.request.url.endsWith('index.html') || ev.request.url.endsWith('/')) {
+    ev.respondWith(
+      fetch(ev.request)
+        .then(res => {
+          const clone = res.clone();
+          caches.open(CACHE).then(c => c.put(ev.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(ev.request))
+    );
+    return;
+  }
+  // Cache first para os demais arquivos
   ev.respondWith(
     caches.match(ev.request).then(cached => cached || fetch(ev.request))
   );
