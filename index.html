@@ -1054,101 +1054,130 @@ async function parseSunsetCliffPDF(file) {
   if(!window.pdfjsLib) throw new Error('PDF.js não carregado. Verifique a conexão e recarregue.');
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:buf}).promise;
-  let lines = [];
+
+  // Coleta TODOS os items com posição X,Y para análise por linha visual
+  let allItems = [];
   for(let i=1;i<=pdf.numPages;i++){
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const byY = {};
     content.items.forEach(item=>{
-      const y = Math.round(item.transform[5]/3)*3;
-      if(!byY[y]) byY[y]=[];
-      byY[y].push({x:item.transform[4], str:item.str});
-    });
-    Object.keys(byY).sort((a,b)=>Number(b)-Number(a)).forEach(y=>{
-      const sorted=byY[y].sort((a,b)=>a.x-b.x);
-      lines.push(sorted.map(i=>i.str).join(' ').trim());
+      const s = item.str.trim();
+      if(s) allItems.push({ x: item.transform[4], y: item.transform[5], str: s });
     });
   }
-  return parseSunsetCliffLines(lines);
+
+  return parseSunsetCliffItems(allItems);
 }
 
-function parseSunsetCliffLines(lines) {
+function parseSunsetCliffItems(items) {
   const records = [];
   let saldoAtual = null;
   let periodoEnd = null;
 
-  // Regex para linha de dia: DD/MM/YYYY + DOW
-  const DAY_RE = /^(\d{2})\/(\d{2})\/(\d{4})\s+(DOM|SEG|TER|QUA|QUI|SEX|SAB)\s*(.*)/i;
+  const DATE_RE  = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+  const DOW_RE   = /^(DOM|SEG|TER|QUA|QUI|SEX|SAB)$/i;
+  const CLOCK_RE = /^(\d{1,2}):(\d{2})$/;           // hora pura: 09:39
+  const BANK_RE  = /^\d+:\d{2}[CPDcpd]$/;            // hora com sufixo: 09:34C
+  const SALDO_ATUAL_RE = /saldo\s*de\s*horas\s*atual/i;
+  const PERIODO_RE     = /per[íi]odo/i;
+  const HHMM_RE  = /(\d+):(\d{2})\s*\(([^)]+)\)/;   // 016:28 (A COMPENSAR)
 
-  // Período do cartão: "Período: DD/MM/YYYY à DD/MM/YYYY"
-  const PERIODO_RE = /per[íi]odo[^:]*:\s*(\d{2})\/(\d{2})\/(\d{4})\s+[àa]\s+(\d{2})\/(\d{2})\/(\d{4})/i;
+  // ── Agrupa itens por linha visual (Y com tolerância de 4px) ──────────────
+  const rows = [];
+  const used = new Set();
 
-  // Saldo atual no rodapé
-  const SALDO_RE = /saldo de horas atual[^:]*:\s*(\d+):(\d{2})\s*\(([^)]+)\)/i;
+  // Ordena por Y desc (topo→baixo) depois X asc (esq→dir)
+  const sorted = [...items].sort((a,b)=> b.y!==a.y ? b.y-a.y : a.x-b.x);
 
-  lines.forEach(line=>{
+  sorted.forEach((item,idx)=>{
+    if(used.has(idx)) return;
+    const row = [item];
+    used.add(idx);
+    sorted.forEach((other,j)=>{
+      if(!used.has(j) && Math.abs(other.y-item.y)<=4){
+        row.push(other);
+        used.add(j);
+      }
+    });
+    row.sort((a,b)=>a.x-b.x);
+    rows.push(row.map(r=>r.str));
+  });
+
+  // ── Processa cada linha ──────────────────────────────────────────────────
+  rows.forEach(tokens=>{
+    const joined = tokens.join(' ');
+
     // Captura período
-    const pm = line.match(PERIODO_RE);
-    if(pm){ periodoEnd = `${pm[6]}-${pm[5]}-${pm[4]}`; return; }
-
-    // Captura saldo atual
-    const sm = line.match(SALDO_RE);
-    if(sm){
-      saldoAtual = { min: parseInt(sm[1])*60+parseInt(sm[2]), status: sm[3].toUpperCase() };
+    if(PERIODO_RE.test(joined)){
+      const pm = joined.match(/(\d{2})\/(\d{2})\/(\d{4})\s+[àa]\s+(\d{2})\/(\d{2})\/(\d{4})/);
+      if(pm) periodoEnd = `${pm[6]}-${pm[5]}-${pm[4]}`;
       return;
     }
 
-    // Linha de dia
-    const dm = line.match(DAY_RE);
-    if(!dm) return;
+    // Captura saldo atual — linha pode conter vários saldos separados
+    if(SALDO_ATUAL_RE.test(joined)){
+      // Pega último valor HHH:MM (STATUS) da linha — é o "Saldo Atual"
+      const allMatches = [...joined.matchAll(/(\d+):(\d{2})\s*\(([^)]+)\)/g)];
+      if(allMatches.length){
+        const last = allMatches[allMatches.length-1];
+        saldoAtual = { min: parseInt(last[1])*60+parseInt(last[2]), status: last[3].toUpperCase() };
+      }
+      return;
+    }
 
-    const [,dd,mm,yyyy,dow,rest] = dm;
-    if(dow==='DOM'||dow==='SAB') return; // fim de semana
+    // ── Linha de dia ────────────────────────────────────────────────────────
+    const dateIdx = tokens.findIndex(t=>DATE_RE.test(t));
+    if(dateIdx===-1) return;
+
+    const dateMatch = tokens[dateIdx].match(DATE_RE);
+    const [,dd,mm,yyyy] = dateMatch;
     const ds = `${yyyy}-${mm}-${dd}`;
+
+    // DOW deve estar logo depois da data
+    const dowIdx = tokens.findIndex((t,i)=>i>dateIdx && DOW_RE.test(t));
+    if(dowIdx===-1) return;
+    const dow = tokens[dowIdx].toUpperCase();
+    if(dow==='DOM'||dow==='SAB') return;
+
+    // Tokens restantes após o DOW
+    const rest = tokens.slice(dowIdx+1);
+    const restStr = rest.join(' ');
 
     let type=null, entry=null, exit=null, note='', isHO=false;
 
-    // --- Férias ---
-    if(/f[eé]rias/i.test(rest)){
+    // Férias
+    if(rest.some(t=>/f[eé]rias/i.test(t))){
       type='abono'; note='Férias';
     } else {
-      // Horários de ponto: HH:MM NÃO seguido de letra C/P/D
-      // (os valores de banco têm sufixo, ex: 09:34C, 00:58C)
-      const clockTimes=[];
-      const ctRe=/\b(\d{1,2}):(\d{2})\b(?![CPDcpd])/g;
-      let m;
-      while((m=ctRe.exec(rest))!==null){
-        const h=parseInt(m[1]),min=parseInt(m[2]);
-        // Horário razoável de ponto (06:00–23:00) e não parece valor de abono isolado sem ponto
-        if(h>=6&&h<=23&&min>=0&&min<=59) clockTimes.push(`${pad(h)}:${pad(min)}`);
-      }
+      // Horários de ponto (sem sufixo, hora entre 06–23)
+      const clockTimes = rest
+        .filter(t=>CLOCK_RE.test(t))
+        .map(t=>{ const[h,m]=t.split(':').map(Number); return {h,m,str:t}; })
+        .filter(({h})=>h>=6&&h<=23)
+        .map(({str})=>str);
 
-      // Valores de banco (com sufixo C=compensado, P=pago, D=desconto)
-      const bankRe=/\b(\d+):(\d{2})([CPDcpd])\b/g;
-      let hasDesconto=false, hasAbono=false;
-      while((m=bankRe.exec(rest))!==null){
-        const suffix=m[3].toUpperCase();
-        if(suffix==='D') hasDesconto=true;
-      }
+      // Tokens de banco (com sufixo C/P/D)
+      const bankTokens = rest.filter(t=>BANK_RE.test(t));
+      const hasDesconto = bankTokens.some(t=>/D$/i.test(t));
 
-      // Abono full-day: 09:00 ou 08:59 SEM horário de ponto (= coluna Abono preenchida)
-      const abonoValRe=/\b(09:00|08:59)\b(?![CPDcpd])/;
-      if(clockTimes.length===0 && abonoValRe.test(rest)) hasAbono=true;
+      // Abono full-day: 09:00 ou 08:59 sem sufixo
+      const hasAbonoVal = rest.some(t=>CLOCK_RE.test(t) && (t==='09:00'||t==='08:59'));
 
       if(clockTimes.length>=2){
         type='worked';
         entry=clockTimes[0];
         exit=clockTimes[clockTimes.length-1];
-      } else if(hasAbono){
+      } else if(clockTimes.length===0 && hasAbonoVal){
         type='abono'; note='Abono';
-      } else if(clockTimes.length===0 && (hasDesconto || /\b\d+:\d{2}[CPDcpd]\b/.test(rest))){
-        // Tem valores de banco mas sem horário de ponto = falta ou abono
+      } else if(clockTimes.length===0 && bankTokens.length>0){
         type = hasDesconto ? 'absent' : 'abono';
-      } else if(clockTimes.length===0){
-        // Linha sem nada = feriado ou dia sem registro — não importa
-        return;
+        if(!hasDesconto) note='Abono';
+      } else if(clockTimes.length===0 && rest.length===0){
+        return; // linha vazia = feriado/sem registro
+      } else if(clockTimes.length===1){
+        // Apenas 1 horário — registro incompleto, marca como trabalhado sem saída
+        type='worked'; entry=clockTimes[0];
       } else {
-        // 1 horário apenas — registro incompleto, ignora
         return;
       }
     }
