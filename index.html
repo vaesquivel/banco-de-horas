@@ -291,7 +291,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
       </div>
 
       <span class="setup-section-label" style="margin-top:4px">
-        Dias de Home Office <span class="opt-label">(clique para selecionar)</span>
+        Dias habituais de Home Office <span class="opt-label">(opcional — só para lembrete visual)</span>
       </span>
       <div class="field-group">
         <div class="ho-days-grid" id="ho-days-btns">
@@ -301,6 +301,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
           <button class="ho-day-btn" data-dow="4" onclick="toggleHODay(this)">Qui</button>
           <button class="ho-day-btn" data-dow="5" onclick="toggleHODay(this)">Sex</button>
         </div>
+        <div style="font-size:11px;color:var(--muted2);margin-top:8px;line-height:1.5">💡 Pode ter mais de um HO na mesma semana — basta marcar a caixinha "🏠 Home Office" ao registrar qualquer dia.</div>
       </div>
 
       <button class="btn-save" style="width:100%;margin-top:4px" onclick="goToImportStep()">Próximo →</button>
@@ -416,7 +417,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
       <span style="color:var(--muted2)">Desenvolvido com <span style="color:#e05a2b;font-weight:600">Claude IA</span> · Anthropic</span>
     </div>
   </div>
-  <span class="footer-tag">⏱ Banco de Horas v1.0</span>
+  <span class="footer-tag">⏱ Banco de Horas v1.1</span>
 </footer>
 
 <!-- ── MODAL registro ── -->
@@ -597,6 +598,43 @@ const getWorked = r => {
   return null;
 };
 
+/* ── FERIADOS NACIONAIS BRASILEIROS ── */
+function calcEaster(year) {
+  const a=year%19,b=Math.floor(year/100),c=year%100;
+  const d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25);
+  const g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30;
+  const i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7;
+  const m=Math.floor((a+11*h+22*l)/451);
+  const month=Math.floor((h+l-7*m+114)/31);
+  const day=(h+l-7*m+114)%31+1;
+  return new Date(year,month-1,day,12);
+}
+function buildHolidaysBR(year) {
+  const h={};
+  h[`${year}-01-01`]='Ano Novo';
+  h[`${year}-04-21`]='Tiradentes';
+  h[`${year}-05-01`]='Dia do Trabalho';
+  h[`${year}-09-07`]='Independência';
+  h[`${year}-10-12`]='N. S. Aparecida';
+  h[`${year}-11-02`]='Finados';
+  h[`${year}-11-15`]='Proc. da República';
+  h[`${year}-12-25`]='Natal';
+  const easter=calcEaster(year);
+  const ds=n=>{const x=new Date(easter);x.setDate(x.getDate()+n);return`${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`;};
+  h[ds(-48)]='Carnaval';
+  h[ds(-47)]='Carnaval';
+  h[ds( -2)]='Sexta-feira Santa';
+  h[ds( 60)]='Corpus Christi';
+  return h;
+}
+const _holCache={};
+function getHolidayName(dateStr) {
+  const y=parseInt(dateStr.substring(0,4));
+  if(!_holCache[y]) _holCache[y]=buildHolidaysBR(y);
+  return _holCache[y][dateStr]||null;
+}
+const isHolidayBR = ds => getHolidayName(ds)!==null;
+
 /* Parse time string like "+02:30" or "-01:00" to minutes */
 function parseBalStr(s) {
   if(!s) return 0;
@@ -675,7 +713,13 @@ function commitSetup(openingBalance, importedRecords) {
 
 function finishSetupWithImport() {
   if(!pendingPDFRecords.length){showToast('Nenhum registro para importar');return;}
-  commitSetup(0, pendingPDFRecords);
+  // Filtra somente registros a partir de 01/01 do ano atual
+  const jan1=`${new Date().getFullYear()}-01-01`;
+  const filtered=pendingPDFRecords.filter(r=>r.date>=jan1);
+  if(!filtered.length){showToast(`Nenhum registro de ${new Date().getFullYear()} encontrado nos PDFs`);return;}
+  const ignorados=pendingPDFRecords.length-filtered.length;
+  if(ignorados>0) showToast(`✓ ${filtered.length} registros importados (${ignorados} de 2025 ignorados)`);
+  commitSetup(0, filtered);
 }
 
 function finishSetupSkipImport() {
@@ -773,7 +817,9 @@ function computeCumulative() {
   for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
     const dow=d.getDay(); if(dow===0||dow===6)continue;
     const ds=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    const r=rmap[ds], b=r?getBalance(r):-WORK_MIN;
+    const r=rmap[ds];
+    const autoHol=!r&&isHolidayBR(ds);
+    const b=r?getBalance(r):(autoHol?0:-WORK_MIN);
     if(b!==null)total+=b;
   }
   return total;
@@ -800,8 +846,9 @@ function render(){
     if(ds>today)return;
     if(startDs&&ds<startDs)return; // before tracking start — don't count
     const r=rmap[ds];
-    const type=r?.type||'absent';
-    const b=r?getBalance(r):-WORK_MIN;
+    const autoHol=!r&&isHolidayBR(ds);
+    const type=r?.type||(autoHol?'holiday':'absent');
+    const b=r?getBalance(r):(autoHol?0:-WORK_MIN);
     if(b!==null)monthBal+=b;
     if(type==='worked')nWorked++;
     else if(type==='abono')nAbono++;
@@ -870,7 +917,8 @@ function render(){
       if(ds>today)return;
       if(startDs&&ds<startDs)return;
       const r=rmap[ds];
-      const b=r?getBalance(r):-WORK_MIN;
+      const autoHolW=!r&&isHolidayBR(ds);
+      const b=r?getBalance(r):(autoHolW?0:-WORK_MIN);
       if(b!==null)wBal+=b;
     });
     const wStart=new Date(week[0]+'T12:00:00');
@@ -892,11 +940,13 @@ function render(){
       const isPast=ds<today,isToday=ds===today,isFuture=ds>today;
       const isBeforeStart=!!(startDs&&ds<startDs);
       const d=new Date(ds+'T12:00:00'),dow=d.getDay(),hoDay=isHODay(dow);
-      const type=r?.type||(isFuture||isBeforeStart?'future':isPast?'absent':'today');
-      const balance=r?getBalance(r):(isPast&&!isBeforeStart?-WORK_MIN:null);
-      const wm=r?getWorked(r):null;
-      const needHO=hoDay&&(isFuture||isToday)&&!r&&!isBeforeStart;
-      const cfg=CFG[isToday&&!isBeforeStart?'today':(isFuture||isBeforeStart)?'future':type]||CFG.future;
+      const autoHol=!r&&!isFuture&&!isBeforeStart&&isHolidayBR(ds);
+      const holName=autoHol?getHolidayName(ds):null;
+      const type=r?.type||(isFuture||isBeforeStart?'future':autoHol?'holiday':isPast?'absent':'today');
+      const balance=r?getBalance(r):(isPast&&!isBeforeStart?(autoHol?0:-WORK_MIN):isToday&&autoHol?0:null);
+      const wm=r?getWorked(r):(autoHol?WORK_MIN:null);
+      const needHO=hoDay&&(isFuture||isToday)&&!r&&!isBeforeStart&&!autoHol;
+      const cfg=CFG[isToday&&!isBeforeStart&&!autoHol?'today':(isFuture||isBeforeStart)?'future':type]||CFG.future;
       const hoLabel=(r?.isHO||(hoDay&&(type==='abono'||type==='worked')))?'🏠 ':'';
 
       const row=document.createElement('div');
@@ -913,7 +963,7 @@ function render(){
         <div class="dr-time">${r?.exit||(!isFuture&&!isBeforeStart?'—':'')}</div>
         <div class="dr-worked" style="color:${wm!==null?(wm>=WORK_MIN?'var(--green)':'var(--red)'):'var(--muted2)'}">${wm!==null?fmtWorked(wm):(isFuture||isBeforeStart?'':'—')}</div>
         <div class="dr-chip">${(!isFuture&&!isBeforeStart)?`<span class="type-chip" style="color:${cfg.chip};background:${cfg.chipBg};border-color:${cfg.bd}">${hoLabel}${cfg.label}</span>`:''} ${needHO?'<span class="warn-chip">⚠️ HO</span>':''}</div>
-        <div class="dr-note">${r?.note||''}</div>
+        <div class="dr-note">${r?.note||holName||''}</div>
         <div class="dr-bal" style="color:${balance!==null?balColor(balance):'var(--muted2)'}">${balance!==null?fmtBal(balance):(isFuture||isBeforeStart?'':'—')}</div>`;
       block.appendChild(row);
     });
@@ -1245,7 +1295,7 @@ function clearPDFImport(){
 }
 
 /* ── SERVICE WORKER ── */
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
+if('serviceWorker'in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 
 checkAndInit();
 </script>
