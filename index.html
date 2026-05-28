@@ -417,7 +417,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
       <span style="color:var(--muted2)">Desenvolvido com <span style="color:#e05a2b;font-weight:600">Claude IA</span> · Anthropic</span>
     </div>
   </div>
-  <span class="footer-tag">⏱ Banco de Horas v1.1</span>
+  <span class="footer-tag">⏱ Banco de Horas v1.2</span>
 </footer>
 
 <!-- ── MODAL registro ── -->
@@ -1206,23 +1206,23 @@ function parseSunsetCliffItems(items) {
       const bankTokens = rest.filter(t=>BANK_RE.test(t));
       const hasDesconto = bankTokens.some(t=>/D$/i.test(t));
 
-      // Abono full-day: 09:00 ou 08:59 sem sufixo
-      const hasAbonoVal = rest.some(t=>CLOCK_RE.test(t) && (t==='09:00'||t==='08:59'));
-
       if(clockTimes.length>=2){
+        // Dia trabalhado normal: entrada + saída
         type='worked';
         entry=clockTimes[0];
         exit=clockTimes[clockTimes.length-1];
-      } else if(clockTimes.length===0 && hasAbonoVal){
+      } else if(clockTimes.length===1 && bankTokens.length===0){
+        // Um único valor de tempo SEM token de banco = coluna Abono (ex: 09:00 = carga do dia)
+        // Dias trabalhados sempre geram um token Exec com sufixo (ex: 08:57C)
         type='abono'; note='Abono';
+      } else if(clockTimes.length===1 && bankTokens.length>0){
+        // Um horário COM token de banco = entrada sem saída (registro incompleto)
+        type='worked'; entry=clockTimes[0];
       } else if(clockTimes.length===0 && bankTokens.length>0){
         type = hasDesconto ? 'absent' : 'abono';
         if(!hasDesconto) note='Abono';
       } else if(clockTimes.length===0 && rest.length===0){
-        return; // linha vazia = feriado/sem registro
-      } else if(clockTimes.length===1){
-        // Apenas 1 horário — registro incompleto, marca como trabalhado sem saída
-        type='worked'; entry=clockTimes[0];
+        return; // linha vazia = sem registro
       } else {
         return;
       }
