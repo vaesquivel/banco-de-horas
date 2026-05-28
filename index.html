@@ -553,11 +553,9 @@ const todayStr = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.
 const pad      = n => String(n).padStart(2,'0');
 const isHODay  = dow => (setup?.hoDays??[]).includes(dow);
 
-/* July cutover year — last July 1 that has passed */
+/* July cutover — always July 1 of the current year */
 function julyStart() {
-  const now = new Date();
-  const y = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear()-1;
-  return `${y}-07-01`;
+  return `${new Date().getFullYear()}-07-01`;
 }
 
 const fmtBal = (m,sign=true) => {
