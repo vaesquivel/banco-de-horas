@@ -232,6 +232,10 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 .share-divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 .share-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
 .url-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--accent);margin-top:8px;word-break:break-all}
+.btn-tab{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s}
+.btn-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-copy-json{position:absolute;top:8px;right:8px;padding:4px 8px;font-size:12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--muted)}
+.btn-copy-json:hover{background:var(--surface2)}
 
 /* ── FOOTER ── */
 #app-footer{max-width:1040px;margin:0 auto;padding:20px 28px 36px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid var(--border)}
@@ -339,10 +343,10 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 
       <div id="ob-row">
         <div class="ob-label">
-          <strong>Saldo acumulado anterior</strong>
-          Saldo do banco em horas na virada (positivo = crédito, negativo = débito)
+          <strong>Saldo do RH na data de início <span style="font-weight:400;color:var(--muted2)">(opcional)</span></strong>
+          <span id="ob-label-sub">Informe o saldo que o seu sistema de RH mostra. Deixe em branco se não souber.</span>
         </div>
-        <input type="text" id="inp-ob" placeholder="+02:30" style="width:110px;text-align:center"/>
+        <input type="text" id="inp-ob" placeholder="+00:00" style="width:110px;text-align:center"/>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
@@ -367,6 +371,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
       </div>
       <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
         <button class="btn-outline" onclick="showShareGuide()" title="Como compartilhar">🔗 Compartilhar app</button>
+        <button class="btn-outline" onclick="showBackupModal()" title="Exportar / Importar dados">💾 Backup</button>
         <div id="balance-cards">
           <div class="bal-card" id="card-total">
             <div class="bc-label">Banco Acumulado</div>
@@ -516,6 +521,49 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
     </div>
     <div class="share-footer">
       <button class="btn-cancel" onclick="closeShare()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL backup ── -->
+<div id="backup-overlay" class="overlay-wrap" onclick="closeBackup(event)">
+  <div id="backup-box" class="modal-box" style="max-width:560px">
+    <div class="share-header">
+      <h2>💾 Backup de dados</h2>
+      <p>Exporte seus registros para guardar ou comparar. Importe para restaurar em outro dispositivo.</p>
+    </div>
+    <div class="share-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn-tab active" id="tab-export" onclick="switchBackupTab('export')">📤 Exportar</button>
+        <button class="btn-tab" id="tab-import" onclick="switchBackupTab('import')">📥 Importar</button>
+      </div>
+
+      <div id="backup-export-panel">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Copie o JSON abaixo. Use para guardar um backup ou para comparar com outro app.</p>
+        <div style="position:relative">
+          <textarea id="backup-json-out" readonly style="width:100%;height:200px;font-family:var(--mono);font-size:11px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2);color:var(--text);line-height:1.4" placeholder="Clique em 'Gerar JSON' para exportar"></textarea>
+          <button class="btn-copy-json" onclick="copyBackupJson()" id="btn-copy-json" title="Copiar para área de transferência">📋</button>
+        </div>
+        <div id="backup-copy-ok" style="display:none;font-size:11px;color:var(--green);margin-top:4px">✓ Copiado!</div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn-save" style="flex:1;min-width:140px" onclick="generateBackupJson()">Gerar JSON</button>
+          <button class="btn-outline" style="flex:1;min-width:140px" onclick="downloadBackupJson()">⬇ Baixar .json</button>
+        </div>
+        <div style="margin-top:14px;padding:10px 12px;background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:8px;font-size:11px;color:var(--blue);line-height:1.6">
+          <strong>💡 Para comparar com o app da aba anônima:</strong><br>
+          Gere o JSON no app correto, depois abra a aba anônima, clique em 💾 Backup → Importar e cole o JSON. O app anônimo vai usar seus dados manuais.
+        </div>
+      </div>
+
+      <div id="backup-import-panel" style="display:none">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Cole o JSON exportado de outro app ou de um backup anterior. <strong style="color:var(--red)">Isso substituirá todos os registros atuais.</strong></p>
+        <textarea id="backup-json-in" style="width:100%;height:200px;font-family:var(--mono);font-size:11px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2);color:var(--text);line-height:1.4" placeholder='Cole o JSON aqui... (começa com [{"date":'></textarea>
+        <div id="backup-import-err" style="display:none;font-size:11px;color:var(--red);margin-top:6px"></div>
+        <button class="btn-save" style="margin-top:10px;width:100%" onclick="importBackupJson()">✓ Importar e substituir dados</button>
+      </div>
+    </div>
+    <div class="share-footer">
+      <button class="btn-cancel" onclick="closeBackup()">Fechar</button>
     </div>
   </div>
 </div>
@@ -698,7 +746,9 @@ function finishSetupWithImport() {
   if(!filtered.length){showToast(`Nenhum registro de ${new Date().getFullYear()} encontrado nos PDFs`);return;}
   const ignorados=pendingPDFRecords.length-filtered.length;
   if(ignorados>0) showToast(`✓ ${filtered.length} registros importados (${ignorados} de 2025 ignorados)`);
-  commitSetup(0, filtered);
+  // Lê saldo inicial digitado pelo usuário (para sincronizar com o RH)
+  const ob = parseBalStr(document.getElementById('inp-ob').value);
+  commitSetup(ob, filtered);
 }
 
 function finishSetupSkipImport() {
@@ -1032,6 +1082,68 @@ function copyShareUrl(){
   }).catch(()=>showToast('Copie o link manualmente'));
 }
 
+/* ── BACKUP ── */
+function showBackupModal(){
+  document.getElementById('backup-json-out').value='';
+  document.getElementById('backup-json-in').value='';
+  document.getElementById('backup-import-err').style.display='none';
+  document.getElementById('backup-copy-ok').style.display='none';
+  switchBackupTab('export');
+  document.getElementById('backup-overlay').classList.add('open');
+}
+function closeBackup(e){
+  if(e&&e.target!==document.getElementById('backup-overlay'))return;
+  document.getElementById('backup-overlay').classList.remove('open');
+}
+function switchBackupTab(tab){
+  document.getElementById('backup-export-panel').style.display=tab==='export'?'block':'none';
+  document.getElementById('backup-import-panel').style.display=tab==='import'?'block':'none';
+  document.getElementById('tab-export').className='btn-tab'+(tab==='export'?' active':'');
+  document.getElementById('tab-import').className='btn-tab'+(tab==='import'?' active':'');
+}
+function generateBackupJson(){
+  const out=JSON.stringify(records,null,2);
+  document.getElementById('backup-json-out').value=out;
+  showToast(`${records.length} registros prontos para exportar`);
+}
+function copyBackupJson(){
+  const txt=document.getElementById('backup-json-out').value;
+  if(!txt){showToast('Clique em "Gerar JSON" primeiro');return;}
+  navigator.clipboard.writeText(txt).then(()=>{
+    const ok=document.getElementById('backup-copy-ok');
+    ok.style.display='block';
+    setTimeout(()=>ok.style.display='none',2000);
+  }).catch(()=>showToast('Copie manualmente'));
+}
+function downloadBackupJson(){
+  const txt=document.getElementById('backup-json-out').value;
+  if(!txt){showToast('Clique em "Gerar JSON" primeiro');return;}
+  const blob=new Blob([txt],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`banco-horas-backup-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importBackupJson(){
+  const txt=document.getElementById('backup-json-in').value.trim();
+  const errEl=document.getElementById('backup-import-err');
+  errEl.style.display='none';
+  try{
+    const parsed=JSON.parse(txt);
+    if(!Array.isArray(parsed))throw new Error('Formato inválido: esperado array de registros');
+    if(parsed.length&&!parsed[0].date)throw new Error('Formato inválido: cada item deve ter "date"');
+    records=[...parsed];
+    save();
+    render();
+    document.getElementById('backup-overlay').classList.remove('open');
+    showToast(`✓ ${records.length} registros importados com sucesso`);
+  }catch(err){
+    errEl.textContent='⚠️ Erro: '+err.message;
+    errEl.style.display='block';
+  }
+}
+
 /* ── PDF IMPORT ── */
 function handleDragOver(e){ e.preventDefault(); document.getElementById('pdf-drop-zone').classList.add('drag-over'); }
 function handleDragLeave(){ document.getElementById('pdf-drop-zone').classList.remove('drag-over'); }
@@ -1269,13 +1381,23 @@ function showPDFResult(recs, numFiles) {
   });
   document.getElementById('pdf-result-title').textContent=`${recs.length} registros encontrados`;
   document.getElementById('pdf-result').style.display='block';
-  document.getElementById('ob-row').style.display='none'; // ob not needed for PDF path
   document.getElementById('btn-confirm-import').style.display='block';
   document.getElementById('btn-skip-import').textContent='Pular e começar do zero (julho)';
+  // Mostra campo de saldo inicial com data do primeiro registro
+  if(recs.length>0){
+    const[fy,fm,fd]=recs[0].date.split('-');
+    const startLabel=`${fd}/${fm}/${fy}`;
+    document.getElementById('ob-label-sub').textContent=
+      `Saldo que o seu RH mostra em ${startLabel}. Se o RH conta de outra data, use isso para sincronizar.`;
+    document.getElementById('ob-row').style.display='flex';
+  } else {
+    document.getElementById('ob-row').style.display='none';
+  }
   if(recs.length===0){
     document.getElementById('pdf-parse-warn').style.display='block';
     document.getElementById('pdf-parse-warn').textContent='⚠️ Nenhum registro reconhecido. Tente outro arquivo ou comece do zero.';
     document.getElementById('btn-confirm-import').style.display='none';
+    document.getElementById('ob-row').style.display='none';
   }
 }
 
