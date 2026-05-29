@@ -1116,11 +1116,10 @@ function parseSunsetCliffItems(items) {
   const PERIODO_RE     = /per[íi]odo/i;
   const HHMM_RE  = /(\d+):(\d{2})\s*\(([^)]+)\)/;   // 016:28 (A COMPENSAR)
 
-  // ── Agrupa itens por linha visual (Y com tolerância de 4px) ──────────────
-  const rows = [];
+  // ── Agrupa itens por linha visual (Y com tolerância de 4px) — mantém X ──
+  const rows = []; // cada row = [{str, x}, ...]
   const used = new Set();
 
-  // Ordena por Y desc (topo→baixo) depois X asc (esq→dir)
   const sorted = [...items].sort((a,b)=> b.y!==a.y ? b.y-a.y : a.x-b.x);
 
   sorted.forEach((item,idx)=>{
@@ -1134,11 +1133,25 @@ function parseSunsetCliffItems(items) {
       }
     });
     row.sort((a,b)=>a.x-b.x);
-    rows.push(row.map(r=>r.str));
+    rows.push(row); // mantém {str, x} para usar posição depois
   });
 
+  // X máximo global de linhas de dia (≈ posição da coluna Abono no PDF)
+  // Calculamos depois de montar os rows; usamos uma estimativa inicial.
+  // Na primeira passagem, detectamos o X máximo de linhas que têm data.
+  let globalMaxX = 0;
+  rows.forEach(row=>{
+    if(row.some(r=>DATE_RE.test(r.str))){
+      const mx = Math.max(...row.map(r=>r.x));
+      if(mx > globalMaxX) globalMaxX = mx;
+    }
+  });
+  // Zona Abono = últimos 18% do range horizontal da página, mínimo 40px
+  const abonoThreshold = globalMaxX > 100 ? globalMaxX - Math.max(globalMaxX * 0.18, 40) : Infinity;
+
   // ── Processa cada linha ──────────────────────────────────────────────────
-  rows.forEach(tokens=>{
+  rows.forEach(rowItems=>{
+    const tokens = rowItems.map(r=>r.str);
     const joined = tokens.join(' ');
 
     // Captura período
@@ -1148,19 +1161,16 @@ function parseSunsetCliffItems(items) {
       return;
     }
 
-    // Captura saldo atual — label pode estar na mesma linha ou na linha acima do valor
+    // Captura saldo atual
     if(SALDO_ATUAL_RE.test(joined)){
-      // Tenta pegar valor na mesma linha
       const allMatches = [...joined.matchAll(/(\d+):(\d{2})\s*\(([^)]+)\)/g)];
       if(allMatches.length){
         const last = allMatches[allMatches.length-1];
         saldoAtual = { min: parseInt(last[1])*60+parseInt(last[2]), status: last[3].toUpperCase() };
       }
-      // Mesmo sem valor, marca flag para capturar na próxima linha
       _saldoNextLine = !allMatches.length;
       return;
     }
-    // Linha seguinte ao label "Saldo de Horas Atual" — captura o valor
     if(_saldoNextLine){
       _saldoNextLine = false;
       const allMatches = [...joined.matchAll(/(\d+):(\d{2})\s*\(([^)]+)\)/g)];
@@ -1175,53 +1185,61 @@ function parseSunsetCliffItems(items) {
     const dateIdx = tokens.findIndex(t=>DATE_RE.test(t));
     if(dateIdx===-1) return;
 
-    const dateMatch = tokens[dateIdx].match(DATE_RE);
-    const [,dd,mm,yyyy] = dateMatch;
+    const [,dd,mm,yyyy] = tokens[dateIdx].match(DATE_RE);
     const ds = `${yyyy}-${mm}-${dd}`;
 
-    // DOW deve estar logo depois da data
     const dowIdx = tokens.findIndex((t,i)=>i>dateIdx && DOW_RE.test(t));
     if(dowIdx===-1) return;
     const dow = tokens[dowIdx].toUpperCase();
     if(dow==='DOM'||dow==='SAB') return;
 
-    // Tokens restantes após o DOW
-    const rest = tokens.slice(dowIdx+1);
-    const restStr = rest.join(' ');
+    // Itens após o DOW (com posição X)
+    const restItems = rowItems.slice(dowIdx+1);
+    const rest = restItems.map(r=>r.str);
 
     let type=null, entry=null, exit=null, note='', isHO=false;
 
-    // Férias
     if(rest.some(t=>/f[eé]rias/i.test(t))){
       type='abono'; note='Férias';
     } else {
-      // Horários de ponto (sem sufixo, hora entre 06–23)
-      const clockTimes = rest
-        .filter(t=>CLOCK_RE.test(t))
-        .map(t=>{ const[h,m]=t.split(':').map(Number); return {h,m,str:t}; })
-        .filter(({h})=>h>=6&&h<=23)
-        .map(({str})=>str);
+      // Todos os itens de tempo sem sufixo (hora entre 06–23), com posição X
+      const clockItems = restItems
+        .filter(r=>CLOCK_RE.test(r.str))
+        .map(r=>{ const[h,m]=r.str.split(':').map(Number); return {h,m,str:r.str,x:r.x}; })
+        .filter(({h})=>h>=6&&h<=23);
 
       // Tokens de banco (com sufixo C/P/D)
       const bankTokens = rest.filter(t=>BANK_RE.test(t));
       const hasDesconto = bankTokens.some(t=>/D$/i.test(t));
+      // Banco com valor real (não zero) — indica horas trabalhadas registradas
+      const hasRealBank = bankTokens.some(t=>{
+        const m=t.match(/^(\d+):(\d{2})/);
+        return m&&(parseInt(m[1])>0||parseInt(m[2])>0);
+      });
 
-      if(clockTimes.length>=2){
-        // Dia trabalhado normal: entrada + saída
+      // Separa horários de ponto (colunas Ent/Sai, lado esquerdo)
+      // de valor de abono (coluna Abono, lado direito — X >= abonoThreshold)
+      const punchItems = clockItems.filter(c=>c.x < abonoThreshold);
+      const abonoColItem = clockItems.find(c=>c.x >= abonoThreshold);
+
+      if(punchItems.length>=2){
+        // Dia trabalhado normal: entrada + saída detectadas pela posição
         type='worked';
-        entry=clockTimes[0];
-        exit=clockTimes[clockTimes.length-1];
-      } else if(clockTimes.length===1 && bankTokens.length===0){
-        // Um único valor de tempo SEM token de banco = coluna Abono (ex: 09:00 = carga do dia)
-        // Dias trabalhados sempre geram um token Exec com sufixo (ex: 08:57C)
+        entry=punchItems[0].str;
+        exit=punchItems[punchItems.length-1].str;
+      } else if(abonoColItem && punchItems.length===0){
+        // Valor na coluna Abono sem horários de ponto = dia de abono
         type='abono'; note='Abono';
-      } else if(clockTimes.length===1 && bankTokens.length>0){
-        // Um horário COM token de banco = entrada sem saída (registro incompleto)
-        type='worked'; entry=clockTimes[0];
-      } else if(clockTimes.length===0 && bankTokens.length>0){
+      } else if(punchItems.length===1 && hasRealBank){
+        // Uma entrada + horas de banco reais = registro incompleto (sem saída)
+        type='worked'; entry=punchItems[0].str;
+      } else if(punchItems.length===1 && !hasRealBank){
+        // Uma entrada sem banco real — fallback: pode ser abono mal posicionado
+        type='abono'; note='Abono';
+      } else if(punchItems.length===0 && bankTokens.length>0){
         type = hasDesconto ? 'absent' : 'abono';
         if(!hasDesconto) note='Abono';
-      } else if(clockTimes.length===0 && rest.length===0){
+      } else if(punchItems.length===0 && rest.length===0){
         return; // linha vazia = sem registro
       } else {
         return;
