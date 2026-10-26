@@ -699,10 +699,13 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
     <div class="modal-eyebrow">Sincronização</div>
     <div class="modal-title">Celular e computador com os mesmos dados</div>
     <div id="sync-logged-out">
-      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">
-        Com uma conta, seus registros ficam iguais em todos os seus aparelhos, automaticamente.
-        Entre com o mesmo e-mail e senha no celular e no computador.
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+        Seus registros ficam iguais no celular e no computador, automaticamente.
       </p>
+      <ol style="font-size:12px;color:var(--muted);margin:0 0 16px 18px;line-height:1.8">
+        <li><strong style="color:var(--text)">Primeira vez?</strong> Digite um e-mail seu, invente uma senha (6+ letras) e toque em <strong style="color:var(--text)">Criar conta agora</strong>.</li>
+        <li><strong style="color:var(--text)">Nos outros aparelhos:</strong> mesmo e-mail e senha, botão <strong style="color:var(--text)">Entrar</strong>.</li>
+      </ol>
       <div class="field-group"><span class="field-label">E-mail</span><input type="text" id="sync-email" autocomplete="email" placeholder="voce@exemplo.com"/></div>
       <div class="field-group"><span class="field-label">Senha</span><input type="password" id="sync-pass" autocomplete="current-password" placeholder="mínimo 6 caracteres"/></div>
       <div id="sync-err" class="pdf-err" style="display:none"></div>
@@ -2231,17 +2234,24 @@ const AUTH_ERRS={
 };
 function syncErr(msg){ const el=document.getElementById('sync-err'); el.textContent=msg; el.style.display=msg?'block':'none'; }
 async function syncSignIn(create){
-  if(!cloudOn())return;
+  if(!cloudOn()){ showToast('Sincronização indisponível — recarregue o app com internet'); return; }
   syncErr('');
   const em=document.getElementById('sync-email').value.trim();
   const pw=document.getElementById('sync-pass').value;
-  if(!em||!pw){ syncErr('Preencha e-mail e senha'); return; }
+  if(!em){ syncErr('Preencha o e-mail'); showToast('Preencha o e-mail'); return; }
+  if(!pw){ syncErr('Preencha a senha'); showToast('Preencha a senha'); return; }
+  if(pw.length<6){ syncErr('A senha precisa de pelo menos 6 caracteres'); showToast('Senha muito curta — use 6 ou mais'); return; }
+  showToast(create?'Criando sua conta…':'Entrando…');
   try{
     if(create) await firebase.auth().createUserWithEmailAndPassword(em,pw);
     else await firebase.auth().signInWithEmailAndPassword(em,pw);
     document.getElementById('sync-pass').value='';
-    showToast(create?'Conta criada — sincronizando':'Conectada — sincronizando');
-  }catch(e){ syncErr(AUTH_ERRS[e.code]||('Erro: '+(e.code||e.message))); }
+    showToast(create?'Conta criada — sincronizando seus dados':'Conectada — sincronizando');
+    setTimeout(()=>{document.getElementById('sync-overlay').classList.remove('open');},900);
+  }catch(e){
+    const msg=AUTH_ERRS[e.code]||('Erro: '+(e.code||e.message));
+    syncErr(msg); showToast(msg);
+  }
 }
 async function syncResetPass(){
   if(!cloudOn())return;
