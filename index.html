@@ -736,7 +736,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
 
       <div id="backup-import-panel" style="display:none">
         <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Cole o JSON de um backup <strong>ou o link de transferência</strong> (aquele com #t=…). <strong style="color:var(--red)">Isso substituirá todos os registros atuais.</strong></p>
-        <textarea id="backup-json-in" style="width:100%;height:200px;font-family:var(--mono);font-size:11px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2);color:var(--text);line-height:1.4" placeholder='Cole o JSON aqui... (começa com [{"date":'></textarea>
+        <textarea id="backup-json-in" style="width:100%;height:200px;font-family:var(--mono);font-size:11px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2);color:var(--text);line-height:1.4" placeholder='Cole aqui o LINK de transferência (https://...#t=...) ou o JSON do backup'></textarea>
         <div id="backup-import-err" style="display:none;font-size:11px;color:var(--red);margin-top:6px"></div>
         <button class="btn-save" style="margin-top:10px;width:100%" onclick="importBackupJson()">Importar e substituir dados</button>
       </div>
@@ -1549,7 +1549,7 @@ async function copyTransferLink(){
 }
 /* Na tela de configuração: colar o link de transferência (ou JSON) para migrar */
 function importFromLinkPrompt(){
-  const txt=prompt('Cole aqui o link de transferência (ou o JSON do backup):');
+  const txt=prompt('Cole aqui o LINK de transferência que você recebeu (pode colar o JSON do backup também):');
   if(!txt||!txt.trim()) return;
   document.getElementById('backup-json-in').value=txt.trim();
   importBackupJson();
