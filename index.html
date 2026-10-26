@@ -4,29 +4,29 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Banco de Horas</title>
-<meta name="theme-color" content="#ffffff"/>
+<meta name="theme-color" content="#12284D"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="Banco de Horas"/>
 <link rel="manifest" href="manifest.json"/>
-<link rel="apple-touch-icon" href="icon.svg"/>
+<link rel="apple-touch-icon" href="icon-180.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root {
-  --bg:#f0ede8; --surface:#fff; --surface2:#f7f5f1; --surface3:#edeae4;
-  --border:#e5e1d8; --border2:#ccc8bf;
-  --text:#1c1917; --muted:#78716c; --muted2:#a8a29e;
-  --accent:#2055d4; --white:#fff;
-  --green:#16a34a; --green-bg:#f0fdf4; --green-bd:#86efac;
-  --red:#dc2626;   --red-bg:#fef2f2;   --red-bd:#fca5a5;
-  --blue:#2563eb;  --blue-bg:#eff6ff;  --blue-bd:#93c5fd;
-  --purple:#7c3aed;--purple-bg:#f5f3ff;--purple-bd:#c4b5fd;
-  --amber:#d97706; --amber-bg:#fffbeb; --amber-bd:#fcd34d;
-  --slate:#475569; --slate-bg:#f1f5f9; --slate-bd:#cbd5e1;
-  --row-worked:rgba(22,163,74,.03); --row-abono:rgba(37,99,235,.03);
-  --row-holiday:rgba(124,58,237,.03); --row-absent:rgba(220,38,38,.04);
+  --bg:#f3f4f6; --surface:#fff; --surface2:#f8f9fb; --surface3:#eceef2;
+  --border:#e3e6eb; --border2:#c7cdd8;
+  --text:#12284D; --muted:#5b6880; --muted2:#9aa4b5;
+  --accent:#12284D; --white:#fff;
+  --green:#12284D; --green-bg:#eef2f8; --green-bd:#bac7dc;
+  --red:#b42318;   --red-bg:#fdf1f0;   --red-bd:#f0b9b4;
+  --blue:#475569;  --blue-bg:#f1f4f8;  --blue-bd:#cdd5e0;
+  --purple:#6b7280;--purple-bg:#f3f4f6;--purple-bd:#d2d6dc;
+  --amber:#12284D; --amber-bg:#e9eef6; --amber-bd:#bac7dc;
+  --slate:#64748b; --slate-bg:#f1f5f9; --slate-bd:#cbd5e1;
+  --row-worked:rgba(18,40,77,.03); --row-abono:rgba(71,85,105,.03);
+  --row-holiday:rgba(107,114,128,.03); --row-absent:rgba(180,35,24,.04);
   --sans:'Plus Jakarta Sans',sans-serif; --display:'Manrope',sans-serif; --mono:'JetBrains Mono',monospace;
   --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
   --shadow-md:0 4px 20px rgba(0,0,0,.1); --r:10px;
@@ -38,9 +38,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 /* ── HEADER ── */
 #header{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 0 var(--border),0 2px 12px rgba(0,0,0,.05)}
 #header-inner{max-width:1040px;margin:0 auto;padding:20px 28px 0}
-#header-top{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:18px;padding-bottom:16px}
+#header-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;padding-bottom:14px}
+#greet-row{display:flex;align-items:center;gap:12px}
+#avatar{width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:16px;cursor:pointer;overflow:hidden;flex-shrink:0;box-shadow:var(--shadow)}
+#avatar img{width:100%;height:100%;object-fit:cover}
+#greeting{font-family:var(--display);font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.02em}
+#balance-cards{margin-bottom:4px}
 h1{font-family:var(--display);font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
-h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#2055d4,#7c3aed);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#12284D,#2e4a75);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .subtitle{font-size:12px;color:var(--muted);margin-top:5px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .hdr-actions{display:flex;align-items:center;gap:8px}
 
@@ -60,7 +65,7 @@ h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#2055d4,#7c
 #month-tabs{display:flex;overflow-x:auto;border-top:1px solid var(--border);scrollbar-width:none;padding:6px 0 0}
 #month-tabs::-webkit-scrollbar{display:none}
 .mtab{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-family:var(--sans);font-size:12px;font-weight:500;padding:8px 14px;flex-shrink:0;transition:all .15s;white-space:nowrap;border-radius:6px 6px 0 0}
-.mtab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;background:rgba(32,85,212,.05)}
+.mtab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600;background:rgba(18,40,77,.05)}
 .mtab.has-hist{color:var(--slate);font-style:italic}
 .mtab:hover:not(.active){color:var(--text);background:var(--surface2)}
 
@@ -137,7 +142,7 @@ h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#2055d4,#7c
 input[type="time"],input[type="text"],input[type="date"],input[type="number"]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:var(--mono);outline:none;transition:border-color .15s,box-shadow .15s}
 input[type="text"],input[type="date"]{font-family:var(--sans)}
 input::placeholder{color:var(--muted2)}
-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
 #preview-box{background:var(--surface2);border-radius:8px;padding:12px 16px;margin-bottom:16px;display:none;justify-content:space-between;align-items:center;border:1px solid var(--border)}
 .pv-label{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:4px;font-weight:600}
 #pv-bal{font-family:var(--mono);font-size:24px;font-weight:600;letter-spacing:-.01em}
@@ -148,8 +153,8 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 .ho-row label span{font-size:11px;color:var(--muted)}
 .modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
 .btn-row{display:flex;gap:8px}
-.btn-save{background:var(--accent);border:none;border-radius:8px;color:#fff;padding:10px 22px;cursor:pointer;font-family:var(--sans);font-weight:600;font-size:13px;transition:background .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(32,85,212,.25)}
-.btn-save:hover{background:#1a46b8;box-shadow:0 4px 16px rgba(32,85,212,.35)}
+.btn-save{background:var(--accent);border:none;border-radius:8px;color:#fff;padding:10px 22px;cursor:pointer;font-family:var(--sans);font-weight:600;font-size:13px;transition:background .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(18,40,77,.25)}
+.btn-save:hover{background:#0d1f3c;box-shadow:0 4px 16px rgba(18,40,77,.35)}
 .btn-cancel{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);padding:10px 16px;cursor:pointer;font-family:var(--sans);font-size:13px;transition:all .15s}
 .btn-cancel:hover{border-color:var(--border2);color:var(--text);background:var(--surface2)}
 .btn-delete{background:none;border:1px solid var(--red-bd);border-radius:8px;color:var(--red);padding:10px 16px;cursor:pointer;font-family:var(--sans);font-size:12px;transition:all .15s}
@@ -166,14 +171,14 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 /* ── SETUP OVERLAY ── */
 #setup-overlay{position:fixed;inset:0;background:rgba(28,25,23,.45);backdrop-filter:blur(6px);z-index:800;display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
 #setup-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:36px 32px;width:100%;max-width:460px;box-shadow:0 24px 80px rgba(0,0,0,.15);animation:modalIn .2s ease;margin:auto}
-.setup-icon{width:48px;height:48px;background:linear-gradient(135deg,rgba(32,85,212,.1),rgba(124,58,237,.1));border:1px solid rgba(32,85,212,.18);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px}
+.setup-icon{width:48px;height:48px;background:linear-gradient(135deg,rgba(18,40,77,.1),rgba(46,74,117,.1));border:1px solid rgba(18,40,77,.18);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px}
 .setup-title{font-family:var(--display);font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:-.02em}
 .setup-desc{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6}
 .setup-section-label{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted2);font-weight:600;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);display:block}
 .ho-days-grid{display:flex;gap:6px;flex-wrap:wrap}
 .ho-day-btn{padding:7px 14px;border-radius:7px;cursor:pointer;font-family:var(--sans);font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all .12s}
 .ho-day-btn:hover{border-color:var(--border2);color:var(--text)}
-.ho-day-btn.active{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd);font-weight:600}
+.ho-day-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
 .opt-label{font-size:10px;color:var(--muted2);text-transform:none;letter-spacing:0;font-weight:400}
 .btn-edit-name{background:none;border:none;cursor:pointer;color:var(--muted2);font-size:11px;padding:0 0 0 4px;font-family:var(--sans);transition:color .15s;vertical-align:middle}
 .btn-edit-name:hover{color:var(--accent)}
@@ -185,12 +190,12 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 .step-dot.done{background:var(--green)}
 
 /* PDF import zone */
-#pdf-drop-zone{border:2px dashed var(--border2);border-radius:12px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
-#pdf-drop-zone:hover,#pdf-drop-zone.drag-over{border-color:var(--accent);background:rgba(32,85,212,.04)}
-#pdf-drop-zone .drop-icon{font-size:28px;margin-bottom:10px}
-#pdf-drop-zone .drop-text{font-size:13px;color:var(--muted);line-height:1.6}
-#pdf-drop-zone .drop-sub{font-size:11px;color:var(--muted2);margin-top:4px}
-#pdf-file-input{display:none}
+#pdf-drop-zone,.pdf-zone{border:2px dashed var(--border2);border-radius:12px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+#pdf-drop-zone:hover,#pdf-drop-zone.drag-over,.pdf-zone:hover,.pdf-zone.drag-over{border-color:var(--accent);background:rgba(18,40,77,.04)}
+#pdf-drop-zone .drop-icon,.pdf-zone .drop-icon{font-size:28px;margin-bottom:10px}
+#pdf-drop-zone .drop-text,.pdf-zone .drop-text{font-size:13px;color:var(--muted);line-height:1.6}
+#pdf-drop-zone .drop-sub,.pdf-zone .drop-sub{font-size:11px;color:var(--muted2);margin-top:4px}
+#pdf-file-input,#rh-file-input{display:none}
 
 /* PDF parse result */
 #pdf-result{display:none;margin-bottom:16px}
@@ -215,7 +220,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 /* ── SHARE MODAL ── */
 #share-overlay{z-index:600}
 #share-box{max-width:560px;padding:0;overflow:hidden}
-.share-header{background:linear-gradient(135deg,#2055d4,#7c3aed);padding:28px 28px 22px;color:#fff}
+.share-header{background:linear-gradient(135deg,#12284D,#2e4a75);padding:28px 28px 22px;color:#fff}
 .share-header h2{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
 .share-header p{font-size:13px;opacity:.85;line-height:1.5}
 .share-body{padding:24px 28px;overflow-y:auto;max-height:calc(90vh - 140px)}
@@ -232,25 +237,64 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 .share-divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 .share-footer{padding:16px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
 .url-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--accent);margin-top:8px;word-break:break-all}
+.btn-tab{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);cursor:pointer;transition:all .15s}
+.btn-tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-copy-json{position:absolute;top:8px;right:8px;padding:4px 8px;font-size:12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;cursor:pointer;color:var(--muted)}
+.btn-copy-json:hover{background:var(--surface2)}
 
 /* ── FOOTER ── */
 #app-footer{max-width:1040px;margin:0 auto;padding:20px 28px 36px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-top:1px solid var(--border)}
 .footer-credit{display:flex;align-items:center;gap:10px}
-.footer-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2055d4,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;font-family:var(--display);letter-spacing:.01em}
+.footer-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#12284D,#2e4a75);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;font-family:var(--display);letter-spacing:.01em}
 .footer-text{font-size:11px;color:var(--muted);line-height:1.5}
 .footer-text strong{color:var(--text);font-weight:600}
 .footer-tag{font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;color:var(--muted);font-weight:500;white-space:nowrap}
 
+/* ── PUNCH CARD (bater ponto) ── */
+#punch-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:22px 20px 18px;margin-bottom:18px;display:none;flex-direction:column;align-items:center;gap:8px;box-shadow:var(--shadow);text-align:center}
+.punch-date{font-size:12px;font-weight:600;color:var(--muted);text-transform:capitalize;letter-spacing:.02em}
+.punch-clock{font-family:var(--mono);font-size:46px;font-weight:600;color:var(--text);letter-spacing:.01em;line-height:1.05}
+.punch-status{font-size:12px;color:var(--muted);line-height:1.5}
+.punch-status strong{font-weight:700;color:var(--text)}
+.punch-times{display:flex;gap:8px;width:100%;max-width:430px;margin-top:4px}
+.pt-item{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 6px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.pt-label{font-size:8.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted2);font-weight:600;white-space:nowrap}
+.pt-val{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text);white-space:nowrap}
+.punch-btn{border:none;border-radius:12px;padding:15px 26px;font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:transform .12s,filter .15s;-webkit-tap-highlight-color:transparent;width:100%;max-width:430px;margin-top:6px}
+.punch-btn:active{transform:scale(.98)}
+.punch-btn:hover{filter:brightness(1.12)}
+.punch-btn.entry{background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(18,40,77,.3)}
+.punch-btn.exit{background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(18,40,77,.3)}
+.punch-btn.edit{background:var(--surface2);color:var(--muted);border:1px solid var(--border2);box-shadow:none;font-weight:600}
+.notify-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);margin-top:8px;cursor:pointer}
+.notify-row input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.notify-row span{color:var(--muted2)}
+
 /* ── RESPONSIVE ── */
 @media(max-width:680px){
-  .day-row{grid-template-columns:60px 36px 52px 12px 52px 52px auto auto 64px}
-  .dr-note{display:none}
-  #header-top{flex-direction:column}
-  .bc-value{font-size:22px}
-  #header-inner{padding:16px 16px 0}
-  #main{padding:16px 12px 60px}
+  .day-row{grid-template-columns:50px 32px 48px 10px 48px 1fr 58px;min-height:44px}
+  .dr-note,.dr-worked{display:none}
+  .dr-date{padding-left:10px;font-size:11px}
+  .dr-day{font-size:10px}
+  .dr-time{font-size:11px}
+  .dr-chip{padding:0 4px;text-align:right}
+  .type-chip{font-size:9px;padding:2px 6px;letter-spacing:.02em}
+  .dr-bal{padding-right:10px;font-size:12px}
+  #header-top{flex-direction:column;gap:12px}
+  #header-inner{padding:14px 14px 0}
+  #balance-cards{width:100%}
+  .bal-card{flex:1;min-width:0;padding:12px 8px}
+  .bc-value{font-size:21px}
+  #main{padding:14px 10px 60px}
+  #top-bar{display:none}
   #setup-box{padding:28px 20px}
   #share-box{max-width:100%}
+  .btn-save{padding:13px 22px;font-size:14px}
+  .btn-cancel{padding:13px 16px}
+  input[type="time"],input[type="text"],input[type="date"]{padding:12px;font-size:16px}
+  #punch-card{flex-direction:column;align-items:stretch;text-align:center;gap:6px;padding:22px 16px;border-radius:18px}
+  .punch-clock{font-size:44px;margin:2px 0}
+  .punch-btn{width:100%;padding:17px;font-size:17px;margin-top:10px;border-radius:14px}
 }
 </style>
 </head>
@@ -269,7 +313,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 
     <!-- STEP 1: Profile -->
     <div id="setup-step1">
-      <div class="setup-icon">⏱</div>
+      
       <div class="setup-title">Banco de Horas</div>
       <div class="setup-desc">Configure suas informações. Você poderá editar a qualquer momento.</div>
 
@@ -279,9 +323,14 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
         <input type="text" id="setup-name" placeholder="Ex: Ana Souza" maxlength="60" autocomplete="name"/>
       </div>
       <div class="field-group">
-        <span class="field-label">Início do controle (nova folha)</span>
+        <span class="field-label">Início do controle</span>
         <input type="date" id="setup-date"/>
-        <div style="font-size:11px;color:var(--muted);margin-top:5px">💡 A virada de folha é sempre em julho. O saldo reinicia nessa data.</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px">O saldo acumulado é contado a partir desta data.</div>
+      </div>
+      <div class="field-group">
+        <span class="field-label">Saldo inicial <span style="font-weight:400;color:var(--muted2);font-size:11px">(opcional)</span></span>
+        <input type="text" id="setup-ob" placeholder="Ex: -07:05 ou +02:30" style="max-width:160px"/>
+        <div style="font-size:11px;color:var(--muted);margin-top:5px">Saldo que já existia antes da data de início. Use sinal negativo para débito.</div>
       </div>
 
       <span class="setup-section-label" style="margin-top:4px">Carga horária</span>
@@ -290,6 +339,19 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
         <div><span class="field-label">Saída</span><input type="time" id="setup-exit" value="19:00"/></div>
       </div>
 
+      <span class="setup-section-label" style="margin-top:4px">
+        Sua empresa usa <span class="opt-label">(desmarque o que não se aplica a você)</span>
+      </span>
+      <div class="field-group">
+        <div class="ho-days-grid" id="feat-btns">
+          <button class="ho-day-btn active" data-feat="abono" onclick="toggleFeat(this)">Abono</button>
+          <button class="ho-day-btn active" data-feat="holiday" onclick="toggleFeat(this)">Feriados automáticos</button>
+          <button class="ho-day-btn active" data-feat="ho" onclick="toggleFeat(this)">Home Office</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted2);margin-top:8px;line-height:1.5">O que estiver desmarcado não aparece no seu app. Ex.: sem "Feriados automáticos", feriados viram dias normais.</div>
+      </div>
+
+      <div id="ho-days-section">
       <span class="setup-section-label" style="margin-top:4px">
         Dias habituais de Home Office <span class="opt-label">(opcional — só para lembrete visual)</span>
       </span>
@@ -301,7 +363,8 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
           <button class="ho-day-btn" data-dow="4" onclick="toggleHODay(this)">Qui</button>
           <button class="ho-day-btn" data-dow="5" onclick="toggleHODay(this)">Sex</button>
         </div>
-        <div style="font-size:11px;color:var(--muted2);margin-top:8px;line-height:1.5">💡 Pode ter mais de um HO na mesma semana — basta marcar a caixinha "🏠 Home Office" ao registrar qualquer dia.</div>
+        <div style="font-size:11px;color:var(--muted2);margin-top:8px;line-height:1.5">Pode ter mais de um HO na mesma semana — basta marcar a opção "Home Office" ao registrar qualquer dia.</div>
+      </div>
       </div>
 
       <button class="btn-save" style="width:100%;margin-top:4px" onclick="goToImportStep()">Próximo →</button>
@@ -309,12 +372,12 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 
     <!-- STEP 2: Import PDF -->
     <div id="setup-step2" style="display:none">
-      <div class="setup-icon">📄</div>
+      
       <div class="setup-title">Dados anteriores</div>
       <div class="setup-desc">Você tem o PDF do banco de horas dos meses anteriores (jan–jun)? Importe para manter o histórico. <strong>Isso é opcional.</strong></div>
 
       <div id="pdf-drop-zone" onclick="document.getElementById('pdf-file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-        <div class="drop-icon">📂</div>
+        
         <div class="drop-text">Arraste os PDFs aqui ou <strong>clique para selecionar</strong></div>
         <div class="drop-sub">Selecione vários arquivos de uma vez (jan, fev, mar…)</div>
       </div>
@@ -339,14 +402,14 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 
       <div id="ob-row">
         <div class="ob-label">
-          <strong>Saldo acumulado anterior</strong>
-          Saldo do banco em horas na virada (positivo = crédito, negativo = débito)
+          <strong>Saldo do RH na data de início <span style="font-weight:400;color:var(--muted2)">(opcional)</span></strong>
+          <span id="ob-label-sub">Informe o saldo que o seu sistema de RH mostra. Deixe em branco se não souber.</span>
         </div>
-        <input type="text" id="inp-ob" placeholder="+02:30" style="width:110px;text-align:center"/>
+        <input type="text" id="inp-ob" placeholder="+00:00" style="width:110px;text-align:center"/>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
-        <button class="btn-save" id="btn-confirm-import" style="display:none" onclick="finishSetupWithImport()">✓ Importar e começar</button>
+        <button class="btn-save" id="btn-confirm-import" style="display:none" onclick="finishSetupWithImport()">Importar e começar</button>
         <button class="btn-save" onclick="finishSetupSkipImport()" id="btn-skip-import">Começar do zero (julho) →</button>
         <button class="btn-ghost" onclick="backToStep1()">← Voltar</button>
       </div>
@@ -358,41 +421,67 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 <div id="header">
   <div id="header-inner">
     <div id="header-top">
-      <div>
-        <h1><span class="h1-icon">⏱</span>Banco de Horas</h1>
-        <div class="subtitle">
-          <span id="user-name">—</span><span id="header-meta"></span>
-          <button class="btn-edit-name" onclick="editSetup()" title="Editar configurações">✎ editar</button>
+      <div id="greet-row">
+        <div id="avatar" onclick="document.getElementById('photo-input').click()" title="Toque para colocar sua foto">
+          <span id="avatar-initials">?</span>
+          <img id="avatar-img" alt="" style="display:none"/>
         </div>
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap">
-        <button class="btn-outline" onclick="showShareGuide()" title="Como compartilhar">🔗 Compartilhar app</button>
-        <div id="balance-cards">
-          <div class="bal-card" id="card-total">
-            <div class="bc-label">Banco Acumulado</div>
-            <div class="bc-value" id="val-total">—</div>
-            <div class="bc-sub" id="card-total-sub">—</div>
-          </div>
-          <div class="bal-card" id="card-month">
-            <div class="bc-label" id="card-month-label">Mês</div>
-            <div class="bc-value" id="val-month">—</div>
-            <div class="bc-sub">este mês</div>
+        <div>
+          <div id="greeting">Olá!</div>
+          <div class="subtitle">
+            <span id="header-meta"></span>
+            <button class="btn-edit-name" onclick="editSetup()" title="Editar configurações">editar</button>
           </div>
         </div>
       </div>
-    </div>
-    <div id="chips">
-      <span class="chip" id="chip-worked">—</span>
-      <span class="chip" id="chip-abono">—</span>
-      <span class="chip" id="chip-hol">—</span>
-      <span class="chip" id="chip-abs">—</span>
+      <div class="hdr-actions">
+        <button class="btn-outline" onclick="showRHImport()" title="Importar PDFs do cartão de ponto do RH">Importar RH</button>
+        <button class="btn-outline" onclick="showShareGuide()" title="Como compartilhar">Compartilhar</button>
+        <button class="btn-outline" onclick="showBackupModal()" title="Exportar / Importar dados">Backup</button>
+      </div>
     </div>
     <div id="month-tabs"></div>
   </div>
 </div>
+<input type="file" id="photo-input" accept="image/*" style="display:none" onchange="setPhoto(this.files)"/>
 
 <!-- ── MAIN ── -->
 <div id="main">
+  <!-- Cartão de bater ponto -->
+  <div id="punch-card">
+    <div class="punch-date" id="punch-date">—</div>
+    <div class="punch-clock" id="punch-clock">--:--</div>
+    <div class="punch-status" id="punch-status">—</div>
+    <div class="punch-times" id="punch-times" style="display:none">
+      <div class="pt-item"><span class="pt-label">Saída prevista</span><span class="pt-val" id="pt-exit">—</span></div>
+      <div class="pt-item"><span class="pt-label">Limite 2h extra</span><span class="pt-val" id="pt-limit">—</span></div>
+      <div class="pt-item"><span class="pt-label" id="pt-count-label">Falta</span><span class="pt-val" id="pt-count">—</span></div>
+    </div>
+    <button class="punch-btn entry" id="btn-punch" onclick="punchNow()">▶ Registrar entrada</button>
+    <label class="notify-row" id="notify-row">
+      <input type="checkbox" id="chk-notify" onchange="toggleNotify(this)"/>
+      Avisar 10 min antes da saída e do limite de 2h&nbsp;<span>(com o app aberto)</span>
+    </label>
+  </div>
+
+  <div id="balance-cards">
+    <div class="bal-card" id="card-total">
+      <div class="bc-label">Banco Acumulado</div>
+      <div class="bc-value" id="val-total">—</div>
+      <div class="bc-sub" id="card-total-sub">—</div>
+    </div>
+    <div class="bal-card" id="card-month">
+      <div class="bc-label" id="card-month-label">Mês</div>
+      <div class="bc-value" id="val-month">—</div>
+      <div class="bc-sub">este mês</div>
+    </div>
+  </div>
+  <div id="chips">
+    <span class="chip" id="chip-worked">—</span>
+    <span class="chip" id="chip-abono">—</span>
+    <span class="chip" id="chip-hol">—</span>
+    <span class="chip" id="chip-abs">—</span>
+  </div>
   <div id="top-bar">
     <div id="legend">
       <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Trabalhado</div>
@@ -401,7 +490,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
       <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Falta</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Hoje</div>
     </div>
-    <span class="hint-text">👆 Clique em qualquer dia para registrar</span>
+    <span class="hint-text">Toque em um dia para registrar ou editar</span>
   </div>
   <div id="hist-banner" style="display:none"></div>
   <div id="weeks-container"></div>
@@ -417,7 +506,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
       <span style="color:var(--muted2)">Desenvolvido com <span style="color:#e05a2b;font-weight:600">Claude IA</span> · Anthropic</span>
     </div>
   </div>
-  <span class="footer-tag">⏱ Banco de Horas v1.2</span>
+  <span class="footer-tag">Banco de Horas v1.4</span>
 </footer>
 
 <!-- ── MODAL registro ── -->
@@ -446,7 +535,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
     </div>
     <div class="ho-row field-group">
       <input type="checkbox" id="inp-ho"/>
-      <label for="inp-ho">🏠 Home Office <span>(lembrar de marcar no app corporativo)</span></label>
+      <label for="inp-ho">Home Office <span>(lembrar de marcar no app corporativo)</span></label>
     </div>
     <div class="field-group">
       <span class="field-label">Observação</span>
@@ -466,7 +555,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
 <div id="share-overlay" class="overlay-wrap" onclick="closeShare(event)">
   <div id="share-box" class="modal-box">
     <div class="share-header">
-      <h2>🔗 Como compartilhar o app</h2>
+      <h2>Como compartilhar o app</h2>
       <p>Cada colega usa a própria versão — os dados ficam salvos apenas no navegador de cada um.</p>
     </div>
     <div class="share-body">
@@ -475,9 +564,9 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
       <p style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6">Não precisa criar conta, não precisa instalar nada. Só abrir o link abaixo no navegador.</p>
       <div class="url-box" id="share-url-box" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px" onclick="copyShareUrl()" title="Clique para copiar">
         <span id="share-url-text">https://vaesquivel.github.io/banco-de-horas/</span>
-        <span style="font-size:10px;color:var(--muted2);white-space:nowrap;flex-shrink:0">📋 copiar</span>
+        <span style="font-size:10px;color:var(--muted2);white-space:nowrap;flex-shrink:0">copiar</span>
       </div>
-      <div id="share-copy-ok" style="display:none;font-size:11px;color:var(--green);margin-top:6px">✓ Link copiado!</div>
+      <div id="share-copy-ok" style="display:none;font-size:11px;color:var(--green);margin-top:6px">Link copiado!</div>
 
       <hr class="share-divider"/>
 
@@ -486,7 +575,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
         <div class="step-content">
           <h3>Envie o link pelo WhatsApp ou e-mail</h3>
           <p>Cada colega abre o link no celular ou computador. Na primeira vez o app pede <strong>nome</strong>, <strong>horário</strong> e dias habituais de HO.</p>
-          <div class="step-note">💡 Os dados ficam salvos só no navegador de cada um — ninguém vê os dados de ninguém.</div>
+          <div class="step-note">Os dados ficam salvos só no navegador de cada um — ninguém vê os dados de ninguém.</div>
         </div>
       </div>
 
@@ -495,7 +584,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
         <div class="step-content">
           <h3>Favorite para acesso rápido</h3>
           <p>Peça para cada colega salvar nos favoritos: <strong>Ctrl+D</strong> (Chrome/Edge) ou <strong>⌘+D</strong> (Mac).</p>
-          <div class="step-tip">⚡ No celular: "Adicionar à tela inicial" para abrir como app.</div>
+          <div class="step-tip">No celular: "Adicionar à tela inicial" para abrir como app.</div>
         </div>
       </div>
 
@@ -503,7 +592,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
         <div class="step-num">3</div>
         <div class="step-content">
           <h3>Importar PDF do banco de horas (opcional)</h3>
-          <p>Quem tiver o PDF do cartão de ponto pode importar na configuração inicial para ver o histórico desde janeiro. Clique em <strong>✎ editar</strong> para acessar o fluxo de importação a qualquer momento.</p>
+          <p>Quem tiver o PDF do cartão de ponto pode importar na configuração inicial para ver o histórico desde janeiro. Clique em <strong>editar</strong> para acessar o fluxo de importação a qualquer momento.</p>
         </div>
       </div>
 
@@ -516,6 +605,75 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(32,85,212,.1)}
     </div>
     <div class="share-footer">
       <button class="btn-cancel" onclick="closeShare()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL importar RH ── -->
+<div id="rhimport-overlay" class="overlay-wrap" onclick="closeRHImport(event)">
+  <div id="rhimport-box" class="modal-box" style="max-width:560px">
+    <div class="modal-eyebrow">Importar do RH</div>
+    <div class="modal-title">PDFs do cartão de ponto</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+      Exporte os PDFs no aplicativo do RH e selecione <strong>todos de uma vez</strong> aqui (jan, fev, mar…).
+      Dias que você já registrou manualmente são mantidos — o app adiciona só o que falta.
+    </p>
+    <div class="pdf-zone" id="rh-drop-zone" onclick="document.getElementById('rh-file-input').click()" ondragover="rhDragOver(event)" ondragleave="rhDragLeave(event)" ondrop="rhDrop(event)">
+      
+      <div class="drop-text" id="rh-drop-text">Arraste os PDFs aqui ou <strong>toque para selecionar</strong></div>
+      <div class="drop-sub">Pode selecionar vários arquivos de uma vez — e repetir para adicionar mais</div>
+    </div>
+    <input type="file" id="rh-file-input" accept=".pdf" multiple onchange="handleRHFiles(this.files)"/>
+    <div id="rh-err" class="pdf-err" style="display:none"></div>
+    <div id="rh-summary" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text);line-height:1.7"></div>
+    <div class="modal-actions">
+      <div class="btn-row">
+        <button class="btn-save" id="btn-rh-confirm" style="display:none" onclick="confirmRHImport()">Importar</button>
+        <button class="btn-cancel" onclick="closeRHImport()">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL backup ── -->
+<div id="backup-overlay" class="overlay-wrap" onclick="closeBackup(event)">
+  <div id="backup-box" class="modal-box" style="max-width:560px">
+    <div class="share-header">
+      <h2>Backup de dados</h2>
+      <p>Exporte seus registros para guardar ou comparar. Importe para restaurar em outro dispositivo.</p>
+    </div>
+    <div class="share-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button class="btn-tab active" id="tab-export" onclick="switchBackupTab('export')">Exportar</button>
+        <button class="btn-tab" id="tab-import" onclick="switchBackupTab('import')">Importar</button>
+      </div>
+
+      <div id="backup-export-panel">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Copie o JSON abaixo. Use para guardar um backup ou para comparar com outro app.</p>
+        <div style="position:relative">
+          <textarea id="backup-json-out" readonly style="width:100%;height:200px;font-family:var(--mono);font-size:11px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2);color:var(--text);line-height:1.4" placeholder="Clique em 'Gerar JSON' para exportar"></textarea>
+          <button class="btn-copy-json" onclick="copyBackupJson()" id="btn-copy-json" title="Copiar para área de transferência">copiar</button>
+        </div>
+        <div id="backup-copy-ok" style="display:none;font-size:11px;color:var(--green);margin-top:4px">Copiado!</div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn-save" style="flex:1;min-width:140px" onclick="generateBackupJson()">Gerar JSON</button>
+          <button class="btn-outline" style="flex:1;min-width:140px" onclick="downloadBackupJson()">Baixar .json</button>
+        </div>
+        <div style="margin-top:14px;padding:10px 12px;background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:8px;font-size:11px;color:var(--blue);line-height:1.6">
+          <strong>Para comparar com o app da aba anônima:</strong><br>
+          Gere o JSON no app correto, depois abra a aba anônima, clique em Backup → Importar e cole o JSON. O app anônimo vai usar seus dados manuais.
+        </div>
+      </div>
+
+      <div id="backup-import-panel" style="display:none">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Cole o JSON exportado de outro app ou de um backup anterior. <strong style="color:var(--red)">Isso substituirá todos os registros atuais.</strong></p>
+        <textarea id="backup-json-in" style="width:100%;height:200px;font-family:var(--mono);font-size:11px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2);color:var(--text);line-height:1.4" placeholder='Cole o JSON aqui... (começa com [{"date":'></textarea>
+        <div id="backup-import-err" style="display:none;font-size:11px;color:var(--red);margin-top:6px"></div>
+        <button class="btn-save" style="margin-top:10px;width:100%" onclick="importBackupJson()">Importar e substituir dados</button>
+      </div>
+    </div>
+    <div class="share-footer">
+      <button class="btn-cancel" onclick="closeBackup()">Fechar</button>
     </div>
   </div>
 </div>
@@ -546,7 +704,9 @@ let pendingPDFRecords = [];
 const toMin    = t => { if(!t)return 0; const[h,m]=t.split(':').map(Number); return h*60+m; };
 const todayStr = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
 const pad      = n => String(n).padStart(2,'0');
-const isHODay  = dow => (setup?.hoDays??[]).includes(dow);
+/* Recursos que a empresa do usuário usa (abono / feriados automáticos / home office) */
+const feat     = k => setup?.features ? setup.features[k]!==false : true;
+const isHODay  = dow => feat('ho') && (setup?.hoDays??[]).includes(dow);
 
 /* July cutover — always July 1 of the current year */
 function julyStart() {
@@ -608,6 +768,7 @@ function buildHolidaysBR(year) {
 }
 const _holCache={};
 function getHolidayName(dateStr) {
+  if(!feat('holiday')) return null;
   const y=parseInt(dateStr.substring(0,4));
   if(!_holCache[y]) _holCache[y]=buildHolidaysBR(y);
   return _holCache[y][dateStr]||null;
@@ -632,12 +793,26 @@ function toggleHODay(btn) {
   else      {selectedHODays.push(dow);btn.classList.add('active');}
 }
 
+let featState={abono:true,holiday:true,ho:true};
+function toggleFeat(btn){
+  const k=btn.dataset.feat;
+  featState[k]=!featState[k];
+  btn.classList.toggle('active',featState[k]);
+  if(k==='ho') document.getElementById('ho-days-section').style.display=featState.ho?'':'none';
+}
+function syncFeatButtons(){
+  document.querySelectorAll('#feat-btns .ho-day-btn').forEach(b=>
+    b.classList.toggle('active',featState[b.dataset.feat]!==false));
+  document.getElementById('ho-days-section').style.display=featState.ho?'':'none';
+}
+
 function loadSetup() {
   try{setup=JSON.parse(localStorage.getItem(SETUP_KEY)||'null');}catch{setup=null;}
   if(setup&&!setup.entryTime)setup.entryTime='10:00';
   if(setup&&!setup.exitTime) setup.exitTime='19:00';
   if(setup&&!setup.hoDays)   setup.hoDays=[];
   if(setup&&setup.openingBalance===undefined)setup.openingBalance=0;
+  if(setup&&!setup.features) setup.features={abono:true,holiday:true,ho:true};
 }
 
 function updateStepDots(step) {
@@ -674,7 +849,8 @@ function commitSetup(openingBalance, importedRecords) {
     : (document.getElementById('setup-date').value || julyStart());
   setup = { name, startDate, entryTime:entry, exitTime:exit,
             hoDays:[...selectedHODays].sort((a,b)=>a-b),
-            openingBalance: openingBalance||0 };
+            openingBalance: openingBalance||0,
+            features: {...featState} };
   localStorage.setItem(SETUP_KEY,JSON.stringify(setup));
   if(importedRecords && importedRecords.length){
     // Imported records go directly into the main records array
@@ -686,8 +862,8 @@ function commitSetup(openingBalance, importedRecords) {
   if(!importedRecords || !importedRecords.length) load();
   render();
   showToast(importedRecords && importedRecords.length
-    ? `✓ ${importedRecords.length} registros importados`
-    : '✓ Configuração salva');
+    ? `${importedRecords.length} registros importados`
+    : 'Configuração salva');
 }
 
 function finishSetupWithImport() {
@@ -697,8 +873,10 @@ function finishSetupWithImport() {
   const filtered=pendingPDFRecords.filter(r=>r.date>=jan1);
   if(!filtered.length){showToast(`Nenhum registro de ${new Date().getFullYear()} encontrado nos PDFs`);return;}
   const ignorados=pendingPDFRecords.length-filtered.length;
-  if(ignorados>0) showToast(`✓ ${filtered.length} registros importados (${ignorados} de 2025 ignorados)`);
-  commitSetup(0, filtered);
+  if(ignorados>0) showToast(`${filtered.length} registros importados (${ignorados} de 2025 ignorados)`);
+  // Lê saldo inicial digitado pelo usuário (para sincronizar com o RH)
+  const ob = parseBalStr(document.getElementById('inp-ob').value);
+  commitSetup(ob, filtered);
 }
 
 function finishSetupSkipImport() {
@@ -710,9 +888,13 @@ function editSetup() {
   document.getElementById('setup-date').value  = setup?.startDate||'';
   document.getElementById('setup-entry').value = setup?.entryTime||'10:00';
   document.getElementById('setup-exit').value  = setup?.exitTime||'19:00';
+  const ob=setup?.openingBalance||0;
+  document.getElementById('setup-ob').value = ob===0?'':(ob<0?'-'+fmtWorked(Math.abs(ob)):'+'+fmtWorked(ob));
   selectedHODays=[...(setup?.hoDays||[])];
-  document.querySelectorAll('.ho-day-btn').forEach(b=>
+  document.querySelectorAll('#ho-days-btns .ho-day-btn').forEach(b=>
     b.classList.toggle('active',selectedHODays.includes(parseInt(b.dataset.dow))));
+  featState={...(setup?.features||{abono:true,holiday:true,ho:true})};
+  syncFeatButtons();
   clearPDFImport();
   pendingPDFRecords=[];
   // Show step 1 in edit mode with direct save
@@ -733,26 +915,65 @@ function saveSetupDirect() {
   if(!name){showToast('Digite seu nome');return;}
   if(!date){showToast('Selecione a data de início');return;}
   if(toMin(exit)<=toMin(entry)){showToast('Horário de saída deve ser após a entrada');return;}
+  const obVal=parseBalStr(document.getElementById('setup-ob').value);
   setup.name=name; setup.startDate=date; setup.entryTime=entry; setup.exitTime=exit;
   setup.hoDays=[...selectedHODays].sort((a,b)=>a-b);
+  setup.openingBalance=obVal;
+  setup.features={...featState};
   localStorage.setItem(SETUP_KEY,JSON.stringify(setup));
   document.getElementById('setup-overlay').style.display='none';
   // Restore button
   document.querySelector('#setup-step1 .btn-save').textContent='Próximo →';
   document.querySelector('#setup-step1 .btn-save').onclick=goToImportStep;
   applySetup(); load(); render();
-  showToast('✓ Configuração salva');
+  showToast('Configuração salva');
+}
+
+/* ── SAUDAÇÃO + FOTO ── */
+const PHOTO_KEY='bdh_photo_v1';
+function greetingWord(){ const h=new Date().getHours(); return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'; }
+function renderGreeting(){
+  if(!setup)return;
+  const first=(setup.name||'').trim().split(/\s+/)[0]||'';
+  document.getElementById('greeting').textContent=`${greetingWord()}, ${first}`;
+  const ini=(setup.name||'').trim().split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase()||'?';
+  document.getElementById('avatar-initials').textContent=ini;
+}
+function loadPhoto(){
+  const img=document.getElementById('avatar-img'), ini=document.getElementById('avatar-initials');
+  let d=null; try{d=localStorage.getItem(PHOTO_KEY);}catch{}
+  if(d){ img.src=d; img.style.display='block'; ini.style.display='none'; }
+  else { img.style.display='none'; ini.style.display=''; }
+}
+function setPhoto(files){
+  const f=files&&files[0]; if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const im=new Image();
+    im.onload=()=>{
+      const S=128, c=document.createElement('canvas');
+      c.width=S; c.height=S;
+      const ctx=c.getContext('2d');
+      const side=Math.min(im.width,im.height);
+      ctx.drawImage(im,(im.width-side)/2,(im.height-side)/2,side,side,0,0,S,S);
+      try{ localStorage.setItem(PHOTO_KEY,c.toDataURL('image/jpeg',.85)); }
+      catch{ showToast('Não foi possível salvar a foto'); return; }
+      loadPhoto(); showToast('Foto atualizada');
+    };
+    im.src=e.target.result;
+  };
+  reader.readAsDataURL(f);
 }
 
 function applySetup() {
   WORK_MIN=toMin(setup.exitTime)-toMin(setup.entryTime);
-  document.getElementById('user-name').textContent=setup.name;
+  renderGreeting(); loadPhoto();
   document.title=`Banco de Horas — ${setup.name}`;
   const wh=WORK_MIN/60;
   const whStr=Number.isInteger(wh)?`${wh}h/dia`:`${wh.toFixed(1)}h/dia`;
   const entry=setup.entryTime.replace(':','h').replace(/^0/,'');
   const exit =setup.exitTime.replace(':','h').replace(/^0/,'');
-  const hoStr=setup.hoDays.length?' · '+setup.hoDays.map(d=>DAYS_PT[d]).join(', ')+' = HO':'';
+  const hoStr=(feat('ho')&&setup.hoDays.length)?' · '+setup.hoDays.map(d=>DAYS_PT[d]).join(', ')+' = HO':'';
   document.getElementById('header-meta').textContent=` · ${entry} → ${exit} · ${whStr}${hoStr}`;
   const[y,m,d]=setup.startDate.split('-');
   document.getElementById('card-total-sub').textContent=`desde ${d}/${m}/${y}`;
@@ -926,7 +1147,7 @@ function render(){
       const wm=r?getWorked(r):(autoHol?WORK_MIN:null);
       const needHO=hoDay&&(isFuture||isToday)&&!r&&!isBeforeStart&&!autoHol;
       const cfg=CFG[isToday&&!isBeforeStart&&!autoHol?'today':(isFuture||isBeforeStart)?'future':type]||CFG.future;
-      const hoLabel=(r?.isHO||(hoDay&&(type==='abono'||type==='worked')))?'🏠 ':'';
+      const hoLabel=(r?.isHO||(hoDay&&(type==='abono'||type==='worked')))?'HO · ':'';
 
       const row=document.createElement('div');
       row.className='day-row'+(isToday&&!isBeforeStart?' today-row':'')+(isFuture||isBeforeStart?' future':'')+(!isFuture&&!isBeforeStart?' clickable':'');
@@ -941,19 +1162,140 @@ function render(){
         <div class="dr-arrow">→</div>
         <div class="dr-time">${r?.exit||(!isFuture&&!isBeforeStart?'—':'')}</div>
         <div class="dr-worked" style="color:${wm!==null?(wm>=WORK_MIN?'var(--green)':'var(--red)'):'var(--muted2)'}">${wm!==null?fmtWorked(wm):(isFuture||isBeforeStart?'':'—')}</div>
-        <div class="dr-chip">${(!isFuture&&!isBeforeStart)?`<span class="type-chip" style="color:${cfg.chip};background:${cfg.chipBg};border-color:${cfg.bd}">${hoLabel}${cfg.label}</span>`:''} ${needHO?'<span class="warn-chip">⚠️ HO</span>':''}</div>
+        <div class="dr-chip">${(!isFuture&&!isBeforeStart)?`<span class="type-chip" style="color:${cfg.chip};background:${cfg.chipBg};border-color:${cfg.bd}">${hoLabel}${cfg.label}</span>`:''} ${needHO?'<span class="warn-chip">HO</span>':''}</div>
         <div class="dr-note">${r?.note||holName||''}</div>
         <div class="dr-bal" style="color:${balance!==null?balColor(balance):'var(--muted2)'}">${balance!==null?fmtBal(balance):(isFuture||isBeforeStart?'':'—')}</div>`;
       block.appendChild(row);
     });
     container.appendChild(block);
   });
+
+  renderPunch();
 }
+
+/* ── BATER PONTO ── */
+function nowHHMM(){ const d=new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+
+function renderPunch(){
+  const card=document.getElementById('punch-card');
+  if(!setup){ card.style.display='none'; return; }
+  card.style.display='flex';
+  const today=todayStr(), d=new Date(), dow=d.getDay();
+  document.getElementById('punch-date').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+  document.getElementById('punch-clock').textContent=nowHHMM();
+  document.getElementById('chk-notify').checked=!!setup.notifyExit;
+  const btn=document.getElementById('btn-punch'), st=document.getElementById('punch-status');
+  const times=document.getElementById('punch-times');
+  const r=records.find(x=>x.date===today);
+  times.style.display='none';
+  if(dow===0||dow===6){
+    st.textContent='Fim de semana — bom descanso';
+    btn.style.display='none'; return;
+  }
+  const holName=getHolidayName(today);
+  if(holName&&!r){
+    st.textContent=`Feriado: ${holName}`;
+    btn.style.display='none'; return;
+  }
+  btn.style.display='';
+  if(r&&r.type!=='worked'){
+    const lbl={abono:'Abono / HO',holiday:'Feriado',absent:'Falta'}[r.type]||r.type;
+    st.textContent=`Hoje está marcado como ${lbl}`;
+    btn.textContent='Editar dia'; btn.className='punch-btn edit';
+  } else if(!r||!r.entry){
+    st.textContent='Você ainda não registrou hoje';
+    btn.textContent='Registrar entrada'; btn.className='punch-btn entry';
+  } else if(!r.exit){
+    st.innerHTML=`Entrada registrada às <strong>${r.entry}</strong>`;
+    btn.textContent='Registrar saída'; btn.className='punch-btn exit';
+    // Previsão de saída + limite legal de 2h extras, em tempo real
+    const exitN=toMin(r.entry)+WORK_MIN, limit=exitN+120, now=toMin(nowHHMM());
+    document.getElementById('pt-exit').textContent=fmtWorked(exitN);
+    document.getElementById('pt-limit').textContent=fmtWorked(limit);
+    const lab=document.getElementById('pt-count-label'), val=document.getElementById('pt-count');
+    if(now<exitN){ lab.textContent='Falta'; val.textContent=fmtWorked(exitN-now); val.style.color='var(--text)'; }
+    else if(now<limit){ lab.textContent='Até o limite'; val.textContent=fmtWorked(limit-now); val.style.color='var(--red)'; }
+    else { lab.textContent='Limite de 2h'; val.textContent='excedido'; val.style.color='var(--red)'; }
+    times.style.display='flex';
+  } else {
+    const b=getBalance(r);
+    st.innerHTML=`Dia completo: ${r.entry} → ${r.exit} · saldo <strong style="color:${balColor(b)}">${fmtBal(b)}</strong>`;
+    btn.textContent='Ajustar horários'; btn.className='punch-btn edit';
+  }
+}
+
+function punchNow(){
+  if(!setup) return;
+  const today=todayStr(), d=new Date(), dow=d.getDay(), t=nowHHMM();
+  if(dow===0||dow===6){ showToast('Fim de semana — sem registro'); return; }
+  const r=records.find(x=>x.date===today);
+  if(r&&r.type!=='worked'){ openModal(today,r); return; }
+  if(!r||!r.entry){
+    records=records.filter(x=>x.date!==today);
+    records.push({date:today,type:'worked',entry:t,exit:null,note:'',isHO:isHODay(dow)});
+    records.sort((a,b)=>a.date.localeCompare(b.date));
+    save(); render();
+    showToast(`Entrada registrada às ${t}`);
+  } else if(!r.exit){
+    if(toMin(t)<=toMin(r.entry)){ openModal(today,r); return; }
+    r.exit=t;
+    save(); render();
+    showToast(`Saída ${t} — saldo do dia ${fmtBal(getBalance(r))}`);
+  } else {
+    openModal(today,r);
+  }
+}
+
+/* ── AVISOS DE SAÍDA / LIMITE 2H (lei) ── */
+function toggleNotify(cb){
+  const apply=v=>{
+    setup.notifyExit=v;
+    try{localStorage.setItem(SETUP_KEY,JSON.stringify(setup));}catch{}
+    cb.checked=v;
+    showToast(v?'Avisos ativados':'Avisos desativados');
+  };
+  if(cb.checked&&('Notification'in window)&&Notification.permission!=='granted'){
+    Notification.requestPermission().then(p=>apply(p==='granted'));
+    return;
+  }
+  apply(cb.checked);
+}
+function notifyMsg(title,body){
+  try{ if('Notification'in window&&Notification.permission==='granted') new Notification(title,{body,icon:'icon-180.png'}); }catch{}
+  showToast(`${title} — ${body}`);
+  if(navigator.vibrate) navigator.vibrate([200,100,200]);
+}
+function checkExitAlerts(){
+  if(!setup||!setup.notifyExit) return;
+  const today=todayStr();
+  const r=records.find(x=>x.date===today);
+  if(!r||r.type!=='worked'||!r.entry||r.exit) return;
+  const now=toMin(nowHHMM());
+  const exitN=toMin(r.entry)+WORK_MIN, limit=exitN+120;
+  let flags={}; try{flags=JSON.parse(localStorage.getItem('bdh_notified')||'{}');}catch{}
+  if(flags.date!==today) flags={date:today};
+  if(!flags.exit&&now>=exitN-10&&now<exitN){
+    flags.exit=true;
+    notifyMsg('Quase hora de sair',`Saída prevista às ${fmtWorked(exitN)} — faltam ${exitN-now} min`);
+  }
+  if(!flags.limit&&now>=limit-10&&now<limit){
+    flags.limit=true;
+    notifyMsg('Limite de 2h extras',`Você atinge o limite legal às ${fmtWorked(limit)} — faltam ${limit-now} min`);
+  }
+  try{localStorage.setItem('bdh_notified',JSON.stringify(flags));}catch{}
+}
+
+/* Atualiza relógio, saudação e avisos a cada 15s */
+setInterval(()=>{ if(setup){ renderPunch(); renderGreeting(); checkExitAlerts(); } },15000);
 
 /* ── MODAL ── */
 function openModal(ds,r){
   modalDate=ds;
   const d=new Date(ds+'T12:00:00'),dow=d.getDay(),isHO=isHODay(dow);
+  // Esconde tipos que a empresa do usuário não usa
+  document.querySelector('.tbtn[data-type="abono"]').style.display=feat('abono')?'':'none';
+  document.querySelector('.tbtn[data-type="holiday"]').style.display=feat('holiday')?'':'none';
+  document.querySelector('.ho-row').style.display=feat('ho')?'':'none';
   document.getElementById('modal-eyebrow').textContent=r?'Editar registro':'Novo registro';
   document.getElementById('modal-title').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
   setType(r?.type||(isHO?'abono':'worked'));
@@ -998,7 +1340,7 @@ function saveRecord(){
     isHO: document.getElementById('inp-ho').checked});
   records.sort((a,b)=>a.date.localeCompare(b.date));
   save(); closeModal(); render();
-  showToast('✓ Registro salvo — banco atualizado');
+  showToast('Registro salvo — banco atualizado');
 }
 function deleteRecord(){
   records=records.filter(r=>r.date!==modalDate);
@@ -1032,6 +1374,145 @@ function copyShareUrl(){
   }).catch(()=>showToast('Copie o link manualmente'));
 }
 
+/* ── BACKUP ── */
+function showBackupModal(){
+  document.getElementById('backup-json-out').value='';
+  document.getElementById('backup-json-in').value='';
+  document.getElementById('backup-import-err').style.display='none';
+  document.getElementById('backup-copy-ok').style.display='none';
+  switchBackupTab('export');
+  document.getElementById('backup-overlay').classList.add('open');
+}
+function closeBackup(e){
+  if(e&&e.target!==document.getElementById('backup-overlay'))return;
+  document.getElementById('backup-overlay').classList.remove('open');
+}
+function switchBackupTab(tab){
+  document.getElementById('backup-export-panel').style.display=tab==='export'?'block':'none';
+  document.getElementById('backup-import-panel').style.display=tab==='import'?'block':'none';
+  document.getElementById('tab-export').className='btn-tab'+(tab==='export'?' active':'');
+  document.getElementById('tab-import').className='btn-tab'+(tab==='import'?' active':'');
+}
+function generateBackupJson(){
+  const out=JSON.stringify(records,null,2);
+  document.getElementById('backup-json-out').value=out;
+  showToast(`${records.length} registros prontos para exportar`);
+}
+function copyBackupJson(){
+  const txt=document.getElementById('backup-json-out').value;
+  if(!txt){showToast('Clique em "Gerar JSON" primeiro');return;}
+  navigator.clipboard.writeText(txt).then(()=>{
+    const ok=document.getElementById('backup-copy-ok');
+    ok.style.display='block';
+    setTimeout(()=>ok.style.display='none',2000);
+  }).catch(()=>showToast('Copie manualmente'));
+}
+function downloadBackupJson(){
+  const txt=document.getElementById('backup-json-out').value;
+  if(!txt){showToast('Clique em "Gerar JSON" primeiro');return;}
+  const blob=new Blob([txt],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`banco-horas-backup-${todayStr()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importBackupJson(){
+  const txt=document.getElementById('backup-json-in').value.trim();
+  const errEl=document.getElementById('backup-import-err');
+  errEl.style.display='none';
+  try{
+    const parsed=JSON.parse(txt);
+    if(!Array.isArray(parsed))throw new Error('Formato inválido: esperado array de registros');
+    if(parsed.length&&!parsed[0].date)throw new Error('Formato inválido: cada item deve ter "date"');
+    records=[...parsed];
+    save();
+    render();
+    document.getElementById('backup-overlay').classList.remove('open');
+    showToast(`${records.length} registros importados com sucesso`);
+  }catch(err){
+    errEl.textContent='Erro: '+err.message;
+    errEl.style.display='block';
+  }
+}
+
+/* ── IMPORTAR RH (a qualquer momento, em lote) ── */
+let pendingRHRecords=[];
+
+function showRHImport(){
+  pendingRHRecords=[];
+  document.getElementById('rh-err').style.display='none';
+  document.getElementById('rh-summary').style.display='none';
+  document.getElementById('btn-rh-confirm').style.display='none';
+  document.getElementById('rh-drop-text').innerHTML='Arraste os PDFs aqui ou <strong>toque para selecionar</strong>';
+  document.getElementById('rh-file-input').value='';
+  document.getElementById('rhimport-overlay').classList.add('open');
+}
+function closeRHImport(e){
+  if(e&&e.target!==document.getElementById('rhimport-overlay'))return;
+  document.getElementById('rhimport-overlay').classList.remove('open');
+}
+function rhDragOver(e){ e.preventDefault(); document.getElementById('rh-drop-zone').classList.add('drag-over'); }
+function rhDragLeave(){ document.getElementById('rh-drop-zone').classList.remove('drag-over'); }
+function rhDrop(e){ e.preventDefault(); rhDragLeave(); if(e.dataTransfer.files.length) handleRHFiles(e.dataTransfer.files); }
+
+async function handleRHFiles(files){
+  const pdfs=[...files].filter(f=>f.name.toLowerCase().endsWith('.pdf'));
+  if(!pdfs.length){ rhError('Selecione ao menos um arquivo PDF.'); return; }
+  document.getElementById('rh-err').style.display='none';
+  document.getElementById('rh-drop-text').textContent=`Lendo ${pdfs.length} PDF(s)…`;
+  try{
+    for(const file of pdfs){
+      const result=await parseSunsetCliffPDF(file);
+      result.records.forEach(r=>{
+        if(!pendingRHRecords.find(x=>x.date===r.date)) pendingRHRecords.push(r);
+      });
+    }
+    pendingRHRecords.sort((a,b)=>a.date.localeCompare(b.date));
+    updateRHSummary();
+    document.getElementById('rh-drop-text').innerHTML='PDFs lidos — <strong>toque para adicionar mais</strong>';
+    document.getElementById('rh-file-input').value='';
+  }catch(err){
+    rhError('Não foi possível ler o PDF: '+(err.message||err));
+    document.getElementById('rh-drop-text').innerHTML='Arraste os PDFs aqui ou <strong>toque para selecionar</strong>';
+  }
+}
+
+function updateRHSummary(){
+  const existing=new Set(records.map(r=>r.date));
+  const news=pendingRHRecords.filter(r=>!existing.has(r.date));
+  const dup=pendingRHRecords.length-news.length;
+  const el=document.getElementById('rh-summary');
+  if(!pendingRHRecords.length){
+    el.style.display='block';
+    el.innerHTML='Nenhum registro reconhecido nos PDFs.';
+    document.getElementById('btn-rh-confirm').style.display='none';
+    return;
+  }
+  const first=pendingRHRecords[0].date.split('-').reverse().join('/');
+  const last =pendingRHRecords[pendingRHRecords.length-1].date.split('-').reverse().join('/');
+  el.style.display='block';
+  el.innerHTML=`<strong>${pendingRHRecords.length} dias encontrados</strong> (${first} → ${last})<br>`+
+    `<strong>${news.length}</strong> serão adicionados`+
+    (dup>0?` · · ${dup} já registrados serão mantidos como estão`:'');
+  document.getElementById('btn-rh-confirm').style.display=news.length?'':'none';
+}
+
+function confirmRHImport(){
+  const existing=new Set(records.map(r=>r.date));
+  const news=pendingRHRecords.filter(r=>!existing.has(r.date));
+  if(!news.length){ showToast('Nada novo para importar'); return; }
+  records=[...records,...news].sort((a,b)=>a.date.localeCompare(b.date));
+  save(); render();
+  document.getElementById('rhimport-overlay').classList.remove('open');
+  showToast(`${news.length} dias importados do RH`);
+}
+
+function rhError(msg){
+  const el=document.getElementById('rh-err');
+  el.textContent=msg; el.style.display='block';
+}
+
 /* ── PDF IMPORT ── */
 function handleDragOver(e){ e.preventDefault(); document.getElementById('pdf-drop-zone').classList.add('drag-over'); }
 function handleDragLeave(){ document.getElementById('pdf-drop-zone').classList.remove('drag-over'); }
@@ -1041,7 +1522,7 @@ async function handlePDFFiles(files) {
   const pdfs = [...files].filter(f=>f.name.toLowerCase().endsWith('.pdf'));
   if(!pdfs.length){ showPDFError('Selecione ao menos um arquivo PDF.'); return; }
   hidePDFError();
-  document.getElementById('pdf-drop-zone').querySelector('.drop-text').textContent=`⏳ Lendo ${pdfs.length} PDF(s)…`;
+  document.getElementById('pdf-drop-zone').querySelector('.drop-text').textContent=`Lendo ${pdfs.length} PDF(s)…`;
   try {
     let allRecs = [];
     let latestSaldo = null;
@@ -1116,11 +1597,10 @@ function parseSunsetCliffItems(items) {
   const PERIODO_RE     = /per[íi]odo/i;
   const HHMM_RE  = /(\d+):(\d{2})\s*\(([^)]+)\)/;   // 016:28 (A COMPENSAR)
 
-  // ── Agrupa itens por linha visual (Y com tolerância de 4px) ──────────────
-  const rows = [];
+  // ── Agrupa itens por linha visual (Y com tolerância de 4px) — mantém X ──
+  const rows = []; // cada row = [{str, x}, ...]
   const used = new Set();
 
-  // Ordena por Y desc (topo→baixo) depois X asc (esq→dir)
   const sorted = [...items].sort((a,b)=> b.y!==a.y ? b.y-a.y : a.x-b.x);
 
   sorted.forEach((item,idx)=>{
@@ -1134,11 +1614,25 @@ function parseSunsetCliffItems(items) {
       }
     });
     row.sort((a,b)=>a.x-b.x);
-    rows.push(row.map(r=>r.str));
+    rows.push(row); // mantém {str, x} para usar posição depois
   });
 
+  // X máximo global de linhas de dia (≈ posição da coluna Abono no PDF)
+  // Calculamos depois de montar os rows; usamos uma estimativa inicial.
+  // Na primeira passagem, detectamos o X máximo de linhas que têm data.
+  let globalMaxX = 0;
+  rows.forEach(row=>{
+    if(row.some(r=>DATE_RE.test(r.str))){
+      const mx = Math.max(...row.map(r=>r.x));
+      if(mx > globalMaxX) globalMaxX = mx;
+    }
+  });
+  // Zona Abono = últimos 18% do range horizontal da página, mínimo 40px
+  const abonoThreshold = globalMaxX > 100 ? globalMaxX - Math.max(globalMaxX * 0.18, 40) : Infinity;
+
   // ── Processa cada linha ──────────────────────────────────────────────────
-  rows.forEach(tokens=>{
+  rows.forEach(rowItems=>{
+    const tokens = rowItems.map(r=>r.str);
     const joined = tokens.join(' ');
 
     // Captura período
@@ -1148,19 +1642,16 @@ function parseSunsetCliffItems(items) {
       return;
     }
 
-    // Captura saldo atual — label pode estar na mesma linha ou na linha acima do valor
+    // Captura saldo atual
     if(SALDO_ATUAL_RE.test(joined)){
-      // Tenta pegar valor na mesma linha
       const allMatches = [...joined.matchAll(/(\d+):(\d{2})\s*\(([^)]+)\)/g)];
       if(allMatches.length){
         const last = allMatches[allMatches.length-1];
         saldoAtual = { min: parseInt(last[1])*60+parseInt(last[2]), status: last[3].toUpperCase() };
       }
-      // Mesmo sem valor, marca flag para capturar na próxima linha
       _saldoNextLine = !allMatches.length;
       return;
     }
-    // Linha seguinte ao label "Saldo de Horas Atual" — captura o valor
     if(_saldoNextLine){
       _saldoNextLine = false;
       const allMatches = [...joined.matchAll(/(\d+):(\d{2})\s*\(([^)]+)\)/g)];
@@ -1175,53 +1666,61 @@ function parseSunsetCliffItems(items) {
     const dateIdx = tokens.findIndex(t=>DATE_RE.test(t));
     if(dateIdx===-1) return;
 
-    const dateMatch = tokens[dateIdx].match(DATE_RE);
-    const [,dd,mm,yyyy] = dateMatch;
+    const [,dd,mm,yyyy] = tokens[dateIdx].match(DATE_RE);
     const ds = `${yyyy}-${mm}-${dd}`;
 
-    // DOW deve estar logo depois da data
     const dowIdx = tokens.findIndex((t,i)=>i>dateIdx && DOW_RE.test(t));
     if(dowIdx===-1) return;
     const dow = tokens[dowIdx].toUpperCase();
     if(dow==='DOM'||dow==='SAB') return;
 
-    // Tokens restantes após o DOW
-    const rest = tokens.slice(dowIdx+1);
-    const restStr = rest.join(' ');
+    // Itens após o DOW (com posição X)
+    const restItems = rowItems.slice(dowIdx+1);
+    const rest = restItems.map(r=>r.str);
 
     let type=null, entry=null, exit=null, note='', isHO=false;
 
-    // Férias
     if(rest.some(t=>/f[eé]rias/i.test(t))){
       type='abono'; note='Férias';
     } else {
-      // Horários de ponto (sem sufixo, hora entre 06–23)
-      const clockTimes = rest
-        .filter(t=>CLOCK_RE.test(t))
-        .map(t=>{ const[h,m]=t.split(':').map(Number); return {h,m,str:t}; })
-        .filter(({h})=>h>=6&&h<=23)
-        .map(({str})=>str);
+      // Todos os itens de tempo sem sufixo (hora entre 06–23), com posição X
+      const clockItems = restItems
+        .filter(r=>CLOCK_RE.test(r.str))
+        .map(r=>{ const[h,m]=r.str.split(':').map(Number); return {h,m,str:r.str,x:r.x}; })
+        .filter(({h})=>h>=6&&h<=23);
 
       // Tokens de banco (com sufixo C/P/D)
       const bankTokens = rest.filter(t=>BANK_RE.test(t));
       const hasDesconto = bankTokens.some(t=>/D$/i.test(t));
+      // Banco com valor real (não zero) — indica horas trabalhadas registradas
+      const hasRealBank = bankTokens.some(t=>{
+        const m=t.match(/^(\d+):(\d{2})/);
+        return m&&(parseInt(m[1])>0||parseInt(m[2])>0);
+      });
 
-      if(clockTimes.length>=2){
-        // Dia trabalhado normal: entrada + saída
+      // Separa horários de ponto (colunas Ent/Sai, lado esquerdo)
+      // de valor de abono (coluna Abono, lado direito — X >= abonoThreshold)
+      const punchItems = clockItems.filter(c=>c.x < abonoThreshold);
+      const abonoColItem = clockItems.find(c=>c.x >= abonoThreshold);
+
+      if(punchItems.length>=2){
+        // Dia trabalhado normal: entrada + saída detectadas pela posição
         type='worked';
-        entry=clockTimes[0];
-        exit=clockTimes[clockTimes.length-1];
-      } else if(clockTimes.length===1 && bankTokens.length===0){
-        // Um único valor de tempo SEM token de banco = coluna Abono (ex: 09:00 = carga do dia)
-        // Dias trabalhados sempre geram um token Exec com sufixo (ex: 08:57C)
+        entry=punchItems[0].str;
+        exit=punchItems[punchItems.length-1].str;
+      } else if(abonoColItem && punchItems.length===0){
+        // Valor na coluna Abono sem horários de ponto = dia de abono
         type='abono'; note='Abono';
-      } else if(clockTimes.length===1 && bankTokens.length>0){
-        // Um horário COM token de banco = entrada sem saída (registro incompleto)
-        type='worked'; entry=clockTimes[0];
-      } else if(clockTimes.length===0 && bankTokens.length>0){
+      } else if(punchItems.length===1 && hasRealBank){
+        // Uma entrada + horas de banco reais = registro incompleto (sem saída)
+        type='worked'; entry=punchItems[0].str;
+      } else if(punchItems.length===1 && !hasRealBank){
+        // Uma entrada sem banco real — fallback: pode ser abono mal posicionado
+        type='abono'; note='Abono';
+      } else if(punchItems.length===0 && bankTokens.length>0){
         type = hasDesconto ? 'absent' : 'abono';
         if(!hasDesconto) note='Abono';
-      } else if(clockTimes.length===0 && rest.length===0){
+      } else if(punchItems.length===0 && rest.length===0){
         return; // linha vazia = sem registro
       } else {
         return;
@@ -1239,25 +1738,35 @@ function parseSunsetCliffItems(items) {
 
 function showPDFResult(recs, numFiles) {
   const n = numFiles||1;
-  document.getElementById('pdf-drop-zone').querySelector('.drop-text').innerHTML=`✅ ${n} PDF(s) lido(s) com sucesso`;
+  document.getElementById('pdf-drop-zone').querySelector('.drop-text').innerHTML=`${n} PDF(s) lido(s) com sucesso`;
   const tbody=document.getElementById('pdf-preview-body');
   tbody.innerHTML='';
   const typeLabel={worked:'Trabalhado',abono:'Abono',holiday:'Feriado',absent:'Falta'};
   recs.forEach(r=>{
     const[y,m,d]=r.date.split('-');
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${d}/${m}/${y}</td><td>${r.entry||'—'}</td><td>${r.exit||'—'}</td><td>${typeLabel[r.type]||r.type}${r.note?' · '+r.note:''}${r.isHO?' 🏠':''}</td>`;
+    tr.innerHTML=`<td>${d}/${m}/${y}</td><td>${r.entry||'—'}</td><td>${r.exit||'—'}</td><td>${typeLabel[r.type]||r.type}${r.note?' · '+r.note:''}${r.isHO?' HO':''}</td>`;
     tbody.appendChild(tr);
   });
   document.getElementById('pdf-result-title').textContent=`${recs.length} registros encontrados`;
   document.getElementById('pdf-result').style.display='block';
-  document.getElementById('ob-row').style.display='none'; // ob not needed for PDF path
   document.getElementById('btn-confirm-import').style.display='block';
   document.getElementById('btn-skip-import').textContent='Pular e começar do zero (julho)';
+  // Mostra campo de saldo inicial com data do primeiro registro
+  if(recs.length>0){
+    const[fy,fm,fd]=recs[0].date.split('-');
+    const startLabel=`${fd}/${fm}/${fy}`;
+    document.getElementById('ob-label-sub').textContent=
+      `Saldo que o seu RH mostra em ${startLabel}. Se o RH conta de outra data, use isso para sincronizar.`;
+    document.getElementById('ob-row').style.display='flex';
+  } else {
+    document.getElementById('ob-row').style.display='none';
+  }
   if(recs.length===0){
     document.getElementById('pdf-parse-warn').style.display='block';
-    document.getElementById('pdf-parse-warn').textContent='⚠️ Nenhum registro reconhecido. Tente outro arquivo ou comece do zero.';
+    document.getElementById('pdf-parse-warn').textContent='Nenhum registro reconhecido. Tente outro arquivo ou comece do zero.';
     document.getElementById('btn-confirm-import').style.display='none';
+    document.getElementById('ob-row').style.display='none';
   }
 }
 

@@ -1,5 +1,5 @@
-const CACHE = 'bdh-v6';
-const URLS  = ['./', './index.html', './manifest.json', './icon.svg'];
+const CACHE = 'bdh-v9';
+const URLS  = ['./', './index.html', './manifest.json', './icon.svg', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', ev => {
   ev.waitUntil(
