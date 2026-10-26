@@ -1,0 +1,21 @@
+name: avisos
+on:
+  schedule:
+    # A cada 5 min, 08:00-20:55 de Sao Paulo (11-23 UTC), seg-sex
+    - cron: '*/5 11-23 * * 1-5'
+    # Cobre 21:00-22:55 de Sao Paulo (0-1 UTC do dia seguinte)
+    - cron: '*/5 0-1 * * 2-6'
+  workflow_dispatch:
+
+jobs:
+  avisos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install --quiet google-auth requests
+      - run: python scripts/avisos.py
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}

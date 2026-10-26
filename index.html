@@ -16,6 +16,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js"></script>
 <style>
 :root {
   --bg:#f3f4f6; --surface:#fff; --surface2:#f8f9fb; --surface3:#eceef2;
@@ -531,7 +532,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
     <button class="btn-ghost" id="btn-comp" style="display:none" onclick="markComp()">Marcar hoje como compensação de banco</button>
     <label class="notify-row" id="notify-row">
       <input type="checkbox" id="chk-notify" onchange="toggleNotify(this)"/>
-      Avisar 10 min antes da saída e do limite de 2h&nbsp;<span>(com o app aberto)</span>
+      Avisar 10 min antes da saída e do limite de 2h&nbsp;<span id="notify-mode">(com o app aberto)</span>
     </label>
   </div>
 
@@ -1337,6 +1338,7 @@ function renderPunch(){
   document.getElementById('punch-date').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
   document.getElementById('punch-clock').textContent=nowHHMM();
   document.getElementById('chk-notify').checked=!!setup.notifyExit;
+  try{document.getElementById('notify-mode').textContent=localStorage.getItem('bdh_push_on')?'(mesmo com o app fechado)':'(com o app aberto)';}catch{}
   const btn=document.getElementById('btn-punch'), st=document.getElementById('punch-status');
   const times=document.getElementById('punch-times');
   const compBtn=document.getElementById('btn-comp');
@@ -1425,20 +1427,50 @@ function punchNow(){
 }
 
 /* ── AVISOS DE SAÍDA / LIMITE 2H (lei) ── */
+/* Registra este aparelho para receber push com o app fechado (exige conta) */
+async function enablePush(){
+  if(!cloudOn()||!fbUser) return 'sem-conta';
+  if(!('Notification'in window)||!('PushManager'in window)) return 'sem-suporte';
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted') return 'negado';
+    const reg=swReg||await navigator.serviceWorker.ready;
+    const token=await firebase.messaging().getToken({vapidKey:VAPID_KEY,serviceWorkerRegistration:reg});
+    if(!token) return 'falhou';
+    await fbDb.collection('users').doc(fbUser.uid).set(
+      {pushTokens:{[token]:{at:Date.now(),ua:navigator.userAgent.slice(0,90)}},tz:'America/Sao_Paulo'},
+      {merge:true});
+    return 'ok';
+  }catch(e){ return 'falhou'; }
+}
+
 function toggleNotify(cb){
-  const apply=v=>{
-    setup.notifyExit=v;
-    setup.u=Date.now();
+  const setLocal=v=>{
+    setup.notifyExit=v; setup.u=Date.now();
     try{localStorage.setItem(SETUP_KEY,JSON.stringify(setup));}catch{}
-    cb.checked=v;
-    scheduleSync();
-    showToast(v?'Avisos ativados':'Avisos desativados');
+    cb.checked=v; scheduleSync();
   };
-  if(cb.checked&&('Notification'in window)&&Notification.permission!=='granted'){
-    Notification.requestPermission().then(p=>apply(p==='granted'));
-    return;
+  if(!cb.checked){
+    setLocal(false);
+    try{localStorage.removeItem('bdh_push_on');}catch{}
+    showToast('Avisos desativados'); renderPunch(); return;
   }
-  apply(cb.checked);
+  setLocal(true);
+  enablePush().then(r=>{
+    if(r==='ok'){
+      try{localStorage.setItem('bdh_push_on','1');}catch{}
+      showToast('Avisos ativados — chegam mesmo com o app fechado');
+    } else if(r==='sem-conta'){
+      showToast('Avisos com o app aberto ativados. Para receber com ele fechado, entre em Sincronizar');
+    } else if(r==='sem-suporte'){
+      showToast('Avisos no app ativados. No iPhone, use o app instalado na Tela de Início para push');
+    } else if(r==='negado'){
+      showToast('Permissão de notificação negada no aparelho');
+    } else {
+      showToast('Avisos no app ativados (push indisponível agora)');
+    }
+    renderPunch();
+  });
 }
 function notifyMsg(title,body){
   try{ if('Notification'in window&&Notification.permission==='granted') new Notification(title,{body,icon:'icon-180.png'}); }catch{}
@@ -2090,6 +2122,8 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "1037186970661",
   appId: "1:1037186970661:web:36726ab25fc6747c4bfbcc"
 };
+/* Chave pública Web Push (VAPID) do projeto */
+const VAPID_KEY = "BC6rblVaDQq0AuHddssRh6U07y4mL_bMegZmjqYFY_GI1wI_BCGTuLa5B6fXhpPFLtU_jZWuW_i9g9GzCA0T6HQ";
 
 const TOMB_KEY='bdh_tombs_v1';
 let fbDb=null, fbUser=null, fbUnsub=null, syncTimer=null, syncBusy=false, syncAgain=false, lastSyncTxt='';
@@ -2172,7 +2206,7 @@ async function syncNow(manual){
       const sClean=(()=>{const s={...setup};delete s.u;return s;})();
       const cClean=c.setup?(()=>{const s={...c.setup};delete s.u;return s;})():null;
       if(stableStr({rec:c.rec||{},setup:cClean,setupU:c.setupU||0})!==stableStr({rec:merged,setup:sClean,setupU:mSetupU})){
-        await ref.set({rec:merged,setup:sClean,setupU:mSetupU,updatedAt:Date.now()});
+        await ref.set({rec:merged,setup:sClean,setupU:mSetupU,updatedAt:Date.now()},{merge:true});
       }
     }
     lastSyncTxt='Sincronizado às '+nowHHMM();
@@ -2237,7 +2271,8 @@ function updateSyncUI(){
 }
 
 /* ── SERVICE WORKER ── */
-if('serviceWorker'in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
+let swReg=null;
+if('serviceWorker'in navigator){navigator.serviceWorker.register('./sw.js').then(r=>{swReg=r;}).catch(()=>{});}
 
 checkAndInit();
 handleTransferLink();

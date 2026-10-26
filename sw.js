@@ -1,4 +1,4 @@
-const CACHE = 'bdh-v22';
+const CACHE = 'bdh-v23';
 const URLS  = ['./', './index.html', './manifest.json', './icon.svg', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', ev => {
@@ -17,6 +17,26 @@ self.addEventListener('activate', ev => {
       ))
       .then(() => self.clients.claim())
   );
+});
+
+/* ── PUSH: notificações com o app fechado ── */
+self.addEventListener('push', ev => {
+  let d = {};
+  try { d = ev.data ? ev.data.json() : {}; } catch (e) {}
+  const n = (d && (d.data || d.notification)) || {};
+  ev.waitUntil(self.registration.showNotification(n.title || 'Banco de Horas', {
+    body: n.body || '',
+    icon: './icon-180.png',
+    badge: './icon-180.png',
+    tag: n.tag || 'bdh-aviso'
+  }));
+});
+self.addEventListener('notificationclick', ev => {
+  ev.notification.close();
+  ev.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    for (const c of list) { if ('focus' in c) return c.focus(); }
+    return clients.openWindow('./');
+  }));
 });
 
 self.addEventListener('fetch', ev => {
