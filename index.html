@@ -229,6 +229,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
 
 /* ── SHARE MODAL ── */
 #share-overlay{z-index:600}
+#sync-overlay{z-index:900}
 #share-box{max-width:560px;padding:0;overflow:hidden}
 .share-header{background:linear-gradient(135deg,#12284D,#2e4a75);padding:28px 28px 22px;color:#fff}
 .share-header h2{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
@@ -366,7 +367,8 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <div class="setup-title">Banco de Horas</div>
       <div class="setup-desc">Configure suas informações. Você poderá editar a qualquer momento.</div>
 
-      <button class="btn-outline" style="width:100%;margin-bottom:18px;justify-content:center;padding:12px" onclick="importFromLinkPrompt()">Já uso em outro aparelho — importar tudo pelo link</button>
+      <button class="btn-outline" id="setup-sync-btn" style="width:100%;margin-bottom:10px;justify-content:center;padding:12px;display:none" onclick="showSyncModal()">Entrar com minha conta de sincronização</button>
+      <button class="btn-outline" style="width:100%;margin-bottom:18px;justify-content:center;padding:12px" onclick="importFromLinkPrompt()">Já uso em outro aparelho — importar pelo link</button>
 
       <span class="setup-section-label">Identificação</span>
       <div class="field-group">
@@ -575,7 +577,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <span style="color:var(--muted2)">Desenvolvido com <span style="color:#e05a2b;font-weight:600">Claude IA</span> · Anthropic</span>
     </div>
   </div>
-  <span class="footer-tag">Banco de Horas v1.8</span>
+  <span class="footer-tag">Banco de Horas v1.9</span>
 </footer>
 
 <!-- ── MODAL registro ── -->
@@ -2065,8 +2067,15 @@ function clearPDFImport(){
 }
 
 /* ── SINCRONIZAÇÃO NA NUVEM (Firebase — liga ao preencher o config) ── */
-/* Cole aqui o firebaseConfig do projeto (Console Firebase → Configurações do projeto → Seus apps) */
-const FIREBASE_CONFIG = null;
+/* Projeto Firebase banco-de-horas (chaves públicas de cliente; dados protegidos pelas regras do Firestore) */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAbFrQk4oAqRViwmbQi4-ZOn4nvepnsSYI",
+  authDomain: "banco-de-horas-a181e.firebaseapp.com",
+  projectId: "banco-de-horas-a181e",
+  storageBucket: "banco-de-horas-a181e.firebasestorage.app",
+  messagingSenderId: "1037186970661",
+  appId: "1:1037186970661:web:36726ab25fc6747c4bfbcc"
+};
 
 const TOMB_KEY='bdh_tombs_v1';
 let fbDb=null, fbUser=null, fbUnsub=null, syncTimer=null, syncBusy=false, syncAgain=false, lastSyncTxt='';
@@ -2102,8 +2111,10 @@ function applyMergedLocally(m){
 
 function initCloud(){
   const btn=document.getElementById('btn-sync');
+  const sbtn=document.getElementById('setup-sync-btn');
   if(!cloudOn()){ if(btn)btn.style.display='none'; return; }
   btn.style.display='';
+  if(sbtn)sbtn.style.display='';
   try{ firebase.initializeApp(FIREBASE_CONFIG); }catch(e){}
   fbDb=firebase.firestore();
   firebase.auth().onAuthStateChanged(u=>{
@@ -2134,11 +2145,12 @@ async function syncNow(manual){
     const c=snap.exists?(snap.data()||{}):{};
     const merged=mergeRecMaps(localRecMap(), c.rec||{});
     let mSetupU=setup?.u||0;
-    if(setup&&c.setup&&(c.setupU||0)>mSetupU){
-      setup={...c.setup,u:c.setupU};
+    if(c.setup&&(!setup||(c.setupU||0)>mSetupU)){
+      setup={...c.setup,u:c.setupU||Date.now()};
       mSetupU=c.setupU||0;
       try{localStorage.setItem(SETUP_KEY,JSON.stringify(setup));}catch{}
       loadSetup(); applySetup();
+      document.getElementById('setup-overlay').style.display='none';
     }
     applyMergedLocally(merged);
     render();
