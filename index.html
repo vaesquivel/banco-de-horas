@@ -13,6 +13,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
 :root {
   --bg:#f3f4f6; --surface:#fff; --surface2:#f8f9fb; --surface3:#eceef2;
@@ -146,7 +149,7 @@ h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#12284D,#2e
 .time-grid>div{min-width:0}
 /* iOS: inputs de data/hora têm largura intrínseca maior que a célula — forçar encaixe */
 input[type="time"],input[type="date"]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;box-sizing:border-box;height:44px;text-align:left}
-input[type="time"],input[type="text"],input[type="date"],input[type="number"]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:var(--mono);outline:none;transition:border-color .15s,box-shadow .15s}
+input[type="time"],input[type="text"],input[type="date"],input[type="number"],input[type="password"]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:var(--mono);outline:none;transition:border-color .15s,box-shadow .15s}
 input[type="text"],input[type="date"]{font-family:var(--sans)}
 input::placeholder{color:var(--muted2)}
 input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
@@ -488,6 +491,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
         </div>
       </div>
       <div class="hdr-actions">
+        <button class="btn-outline" id="btn-sync" style="display:none" onclick="showSyncModal()" title="Sincronizar entre celular e computador">Sincronizar</button>
         <button class="btn-outline" onclick="showRHImport()" title="Importar PDFs do cartão de ponto do RH">Importar RH</button>
         <button class="btn-outline" onclick="showShareGuide()" title="Como compartilhar">Compartilhar</button>
         <button class="btn-outline" onclick="showBackupModal()" title="Exportar / Importar dados">Backup</button>
@@ -571,7 +575,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <span style="color:var(--muted2)">Desenvolvido com <span style="color:#e05a2b;font-weight:600">Claude IA</span> · Anthropic</span>
     </div>
   </div>
-  <span class="footer-tag">Banco de Horas v1.7</span>
+  <span class="footer-tag">Banco de Horas v1.8</span>
 </footer>
 
 <!-- ── MODAL registro ── -->
@@ -672,6 +676,38 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
     <div class="share-footer">
       <button class="btn-cancel" onclick="closeShare()">Fechar</button>
     </div>
+  </div>
+</div>
+
+<!-- ── MODAL sincronização ── -->
+<div id="sync-overlay" class="overlay-wrap" onclick="closeSync(event)">
+  <div class="modal-box">
+    <div class="modal-eyebrow">Sincronização</div>
+    <div class="modal-title">Celular e computador com os mesmos dados</div>
+    <div id="sync-logged-out">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6">
+        Com uma conta, seus registros ficam iguais em todos os seus aparelhos, automaticamente.
+        Entre com o mesmo e-mail e senha no celular e no computador.
+      </p>
+      <div class="field-group"><span class="field-label">E-mail</span><input type="text" id="sync-email" autocomplete="email" placeholder="voce@exemplo.com"/></div>
+      <div class="field-group"><span class="field-label">Senha</span><input type="password" id="sync-pass" autocomplete="current-password" placeholder="mínimo 6 caracteres"/></div>
+      <div id="sync-err" class="pdf-err" style="display:none"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-save" style="flex:1;min-width:120px" onclick="syncSignIn(false)">Entrar</button>
+        <button class="btn-outline" style="flex:1;min-width:120px" onclick="syncSignIn(true)">Criar conta</button>
+      </div>
+      <button class="btn-ghost" style="margin-top:10px" onclick="syncResetPass()">Esqueci a senha</button>
+    </div>
+    <div id="sync-logged-in" style="display:none">
+      <p style="font-size:13px;margin-bottom:6px">Conectada como <strong id="sync-user">—</strong></p>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px" id="sync-status">—</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-save" style="flex:1;min-width:140px" onclick="syncNow(true)">Sincronizar agora</button>
+        <button class="btn-cancel" style="flex:1;min-width:120px" onclick="syncSignOut()">Sair da conta</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted2);margin-top:12px;line-height:1.5">A foto do avatar não sincroniza — defina em cada aparelho. Sair da conta não apaga os dados deste aparelho.</p>
+    </div>
+    <div class="modal-actions" style="margin-top:14px"><div class="btn-row"><button class="btn-cancel" onclick="closeSync()">Fechar</button></div></div>
   </div>
 </div>
 
@@ -938,8 +974,10 @@ function commitSetup(openingBalance, importedRecords) {
             hoDays:[...selectedHODays].sort((a,b)=>a-b),
             hoDates: parseHODates(document.getElementById('setup-ho-dates').value),
             openingBalance: openingBalance||0,
-            features: {...featState} };
+            features: {...featState},
+            u: Date.now() };
   localStorage.setItem(SETUP_KEY,JSON.stringify(setup));
+  scheduleSync();
   if(importedRecords && importedRecords.length){
     // Imported records go directly into the main records array
     records = [...importedRecords];
@@ -1010,7 +1048,9 @@ function saveSetupDirect() {
   setup.hoDates=parseHODates(document.getElementById('setup-ho-dates').value);
   setup.openingBalance=obVal;
   setup.features={...featState};
+  setup.u=Date.now();
   localStorage.setItem(SETUP_KEY,JSON.stringify(setup));
+  scheduleSync();
   document.getElementById('setup-overlay').style.display='none';
   // Restore button
   document.querySelector('#setup-step1 .btn-save').textContent='Próximo →';
@@ -1340,9 +1380,9 @@ function renderPunch(){
 function markComp(){
   const today=todayStr();
   records=records.filter(x=>x.date!==today);
-  records.push({date:today,type:'comp',entry:null,exit:null,note:'Compensação de banco (HO)',isHO:false});
+  records.push({date:today,type:'comp',entry:null,exit:null,note:'Compensação de banco (HO)',isHO:false,u:Date.now()});
   records.sort((a,b)=>a.date.localeCompare(b.date));
-  save(); render();
+  save(); render(); scheduleSync();
   showToast('Dia marcado como compensação de banco');
 }
 
@@ -1354,14 +1394,14 @@ function punchNow(){
   if(r&&r.type!=='worked'){ openModal(today,r); return; }
   if(!r||!r.entry){
     records=records.filter(x=>x.date!==today);
-    records.push({date:today,type:'worked',entry:t,exit:null,note:'',isHO:isHODay(dow)||isHODate(today)});
+    records.push({date:today,type:'worked',entry:t,exit:null,note:'',isHO:isHODay(dow)||isHODate(today),u:Date.now()});
     records.sort((a,b)=>a.date.localeCompare(b.date));
-    save(); render();
+    save(); render(); scheduleSync();
     showToast(`Entrada registrada às ${t}`);
   } else if(!r.exit){
     if(toMin(t)<=toMin(r.entry)){ openModal(today,r); return; }
-    r.exit=t;
-    save(); render();
+    r.exit=t; r.u=Date.now();
+    save(); render(); scheduleSync();
     showToast(`Saída ${t} — saldo do dia ${fmtBal(getBalance(r))}`);
   } else {
     openModal(today,r);
@@ -1372,8 +1412,10 @@ function punchNow(){
 function toggleNotify(cb){
   const apply=v=>{
     setup.notifyExit=v;
+    setup.u=Date.now();
     try{localStorage.setItem(SETUP_KEY,JSON.stringify(setup));}catch{}
     cb.checked=v;
+    scheduleSync();
     showToast(v?'Avisos ativados':'Avisos desativados');
   };
   if(cb.checked&&('Notification'in window)&&Notification.permission!=='granted'){
@@ -1460,14 +1502,16 @@ function saveRecord(){
     entry:currentType==='worked'?entry:null,
     exit: currentType==='worked'?exit:null,
     note: document.getElementById('inp-note').value||'',
-    isHO: document.getElementById('inp-ho').checked});
+    isHO: document.getElementById('inp-ho').checked,
+    u: Date.now()});
   records.sort((a,b)=>a.date.localeCompare(b.date));
-  save(); closeModal(); render();
+  save(); closeModal(); render(); scheduleSync();
   showToast('Registro salvo — banco atualizado');
 }
 function deleteRecord(){
   records=records.filter(r=>r.date!==modalDate);
-  save(); closeModal(); render();
+  const t=getTombs(); t[modalDate]=Date.now(); setTombsLS(t);
+  save(); closeModal(); render(); scheduleSync();
   showToast('Registro removido');
 }
 function closeModal(e){
@@ -1570,9 +1614,11 @@ async function handleTransferLink(){
     if(!p||!Array.isArray(p.records)) throw new Error('formato');
     const ok=confirm(`Importar dados deste link? ${p.records.length} registros${p.setup?' + configuração':''}. Isso substitui os dados atuais deste aparelho.`);
     if(!ok) return;
-    if(p.setup&&p.setup.name){ try{localStorage.setItem(SETUP_KEY,JSON.stringify(p.setup));}catch{} }
-    try{localStorage.setItem(DATA_KEY,JSON.stringify(p.records));}catch{}
+    if(p.setup&&p.setup.name){ try{localStorage.setItem(SETUP_KEY,JSON.stringify({...p.setup,u:Date.now()}));}catch{} }
+    try{localStorage.setItem(DATA_KEY,JSON.stringify(p.records.map(r=>({...r,u:r.u||Date.now()}))));}catch{}
+    setTombsLS({});
     checkAndInit();
+    scheduleSync();
     showToast(`${p.records.length} registros importados do link`);
   }catch(e){ showToast('Não foi possível ler o link de transferência'); }
 }
@@ -1645,9 +1691,10 @@ function importBackupJson(){
       throw new Error('Formato inválido: cole o JSON gerado pelo botão Exportar');
     }
     if(recs.length&&!recs[0].date)throw new Error('Formato inválido: cada registro deve ter "date"');
-    records=[...recs];
+    records=recs.map(r=>({...r,u:r.u||Date.now()}));
+    setTombsLS({});
     if(newSetup&&newSetup.name){
-      setup={...newSetup};
+      setup={...newSetup,u:Date.now()};
       try{localStorage.setItem(SETUP_KEY,JSON.stringify(setup));}catch{}
     }
     if(newPhoto){ try{localStorage.setItem(PHOTO_KEY,newPhoto);}catch{} }
@@ -1728,8 +1775,9 @@ function confirmRHImport(){
   const existing=new Set(records.map(r=>r.date));
   const news=pendingRHRecords.filter(r=>!existing.has(r.date));
   if(!news.length){ showToast('Nada novo para importar'); return; }
-  records=[...records,...news].sort((a,b)=>a.date.localeCompare(b.date));
-  save(); render();
+  const stamped=news.map(r=>({...r,u:Date.now()}));
+  records=[...records,...stamped].sort((a,b)=>a.date.localeCompare(b.date));
+  save(); render(); scheduleSync();
   document.getElementById('rhimport-overlay').classList.remove('open');
   showToast(`${news.length} dias importados do RH`);
 }
@@ -2016,11 +2064,158 @@ function clearPDFImport(){
   document.getElementById('pdf-file-input').value='';
 }
 
+/* ── SINCRONIZAÇÃO NA NUVEM (Firebase — liga ao preencher o config) ── */
+/* Cole aqui o firebaseConfig do projeto (Console Firebase → Configurações do projeto → Seus apps) */
+const FIREBASE_CONFIG = null;
+
+const TOMB_KEY='bdh_tombs_v1';
+let fbDb=null, fbUser=null, fbUnsub=null, syncTimer=null, syncBusy=false, syncAgain=false, lastSyncTxt='';
+
+const cloudOn=()=>!!(FIREBASE_CONFIG&&window.firebase);
+const getTombs=()=>{try{return JSON.parse(localStorage.getItem(TOMB_KEY)||'{}')}catch{return{}}};
+const setTombsLS=t=>{try{localStorage.setItem(TOMB_KEY,JSON.stringify(t))}catch{}};
+function sortObj(o){ if(Array.isArray(o))return o.map(sortObj); if(o&&typeof o==='object'){const r={};Object.keys(o).sort().forEach(k=>r[k]=sortObj(o[k]));return r;} return o; }
+const stableStr=o=>JSON.stringify(sortObj(o));
+
+/* Mapa local por data, incluindo lápides de registros apagados */
+function localRecMap(){
+  const m={};
+  records.forEach(r=>{ m[r.date]={...r}; if(!m[r.date].u)m[r.date].u=0; });
+  const t=getTombs();
+  Object.keys(t).forEach(d=>{ if(!m[d]||t[d]>=(m[d].u||0)) m[d]={del:true,date:d,u:t[d]}; });
+  return m;
+}
+/* Mescla por dia: vence quem foi editado por último */
+function mergeRecMaps(a,b){
+  const out={...a};
+  Object.keys(b||{}).forEach(d=>{ const x=b[d]; if(!out[d]||(x.u||0)>(out[d].u||0)) out[d]=x; });
+  return out;
+}
+function applyMergedLocally(m){
+  const recs=[],tombs={};
+  Object.keys(m).forEach(d=>{ const v=m[d]; if(v.del)tombs[d]=v.u||0; else recs.push({...v}); });
+  recs.sort((x,y)=>x.date.localeCompare(y.date));
+  records=recs;
+  try{localStorage.setItem(DATA_KEY,JSON.stringify(records));}catch{}
+  setTombsLS(tombs);
+}
+
+function initCloud(){
+  const btn=document.getElementById('btn-sync');
+  if(!cloudOn()){ if(btn)btn.style.display='none'; return; }
+  btn.style.display='';
+  try{ firebase.initializeApp(FIREBASE_CONFIG); }catch(e){}
+  fbDb=firebase.firestore();
+  firebase.auth().onAuthStateChanged(u=>{
+    fbUser=u;
+    if(fbUnsub){fbUnsub();fbUnsub=null;}
+    if(u&&fbDb){
+      fbUnsub=fbDb.collection('users').doc(u.uid).onSnapshot(s=>{ if(!s.metadata.hasPendingWrites) scheduleSync(400); });
+      scheduleSync(400);
+    }
+    updateSyncUI();
+  });
+  window.addEventListener('online',()=>scheduleSync(600));
+}
+
+function scheduleSync(ms){
+  if(!cloudOn()||!fbUser)return;
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>syncNow(false), ms===undefined?1500:ms);
+}
+
+async function syncNow(manual){
+  if(!cloudOn()||!fbUser||!fbDb){ if(manual)showToast('Entre na conta primeiro'); return; }
+  if(syncBusy){ syncAgain=true; return; }
+  syncBusy=true;
+  try{
+    const ref=fbDb.collection('users').doc(fbUser.uid);
+    const snap=await ref.get();
+    const c=snap.exists?(snap.data()||{}):{};
+    const merged=mergeRecMaps(localRecMap(), c.rec||{});
+    let mSetupU=setup?.u||0;
+    if(setup&&c.setup&&(c.setupU||0)>mSetupU){
+      setup={...c.setup,u:c.setupU};
+      mSetupU=c.setupU||0;
+      try{localStorage.setItem(SETUP_KEY,JSON.stringify(setup));}catch{}
+      loadSetup(); applySetup();
+    }
+    applyMergedLocally(merged);
+    render();
+    if(setup){
+      const sClean=(()=>{const s={...setup};delete s.u;return s;})();
+      const cClean=c.setup?(()=>{const s={...c.setup};delete s.u;return s;})():null;
+      if(stableStr({rec:c.rec||{},setup:cClean,setupU:c.setupU||0})!==stableStr({rec:merged,setup:sClean,setupU:mSetupU})){
+        await ref.set({rec:merged,setup:sClean,setupU:mSetupU,updatedAt:Date.now()});
+      }
+    }
+    lastSyncTxt='Sincronizado às '+nowHHMM();
+    if(manual)showToast(lastSyncTxt);
+  }catch(e){
+    lastSyncTxt='Falha ao sincronizar ('+((e&&e.code)||'conexão')+')';
+    if(manual)showToast('Falha ao sincronizar — verifique a internet');
+  }
+  syncBusy=false; updateSyncUI();
+  if(syncAgain){ syncAgain=false; scheduleSync(800); }
+}
+
+const AUTH_ERRS={
+  'auth/invalid-email':'E-mail inválido',
+  'auth/email-already-in-use':'Este e-mail já tem conta — use Entrar',
+  'auth/weak-password':'Senha muito curta (mínimo 6 caracteres)',
+  'auth/invalid-credential':'E-mail ou senha incorretos',
+  'auth/wrong-password':'Senha incorreta',
+  'auth/user-not-found':'Conta não encontrada — use Criar conta',
+  'auth/too-many-requests':'Muitas tentativas — aguarde alguns minutos',
+  'auth/network-request-failed':'Sem conexão com a internet'
+};
+function syncErr(msg){ const el=document.getElementById('sync-err'); el.textContent=msg; el.style.display=msg?'block':'none'; }
+async function syncSignIn(create){
+  if(!cloudOn())return;
+  syncErr('');
+  const em=document.getElementById('sync-email').value.trim();
+  const pw=document.getElementById('sync-pass').value;
+  if(!em||!pw){ syncErr('Preencha e-mail e senha'); return; }
+  try{
+    if(create) await firebase.auth().createUserWithEmailAndPassword(em,pw);
+    else await firebase.auth().signInWithEmailAndPassword(em,pw);
+    document.getElementById('sync-pass').value='';
+    showToast(create?'Conta criada — sincronizando':'Conectada — sincronizando');
+  }catch(e){ syncErr(AUTH_ERRS[e.code]||('Erro: '+(e.code||e.message))); }
+}
+async function syncResetPass(){
+  if(!cloudOn())return;
+  const em=document.getElementById('sync-email').value.trim();
+  if(!em){ syncErr('Digite o e-mail para recuperar a senha'); return; }
+  try{ await firebase.auth().sendPasswordResetEmail(em); syncErr(''); showToast('E-mail de recuperação enviado'); }
+  catch(e){ syncErr(AUTH_ERRS[e.code]||('Erro: '+e.code)); }
+}
+function syncSignOut(){
+  if(cloudOn()) firebase.auth().signOut();
+  showToast('Desconectada — os dados continuam neste aparelho');
+}
+function showSyncModal(){ updateSyncUI(); document.getElementById('sync-overlay').classList.add('open'); }
+function closeSync(e){ if(e&&e.target!==document.getElementById('sync-overlay'))return; document.getElementById('sync-overlay').classList.remove('open'); }
+function updateSyncUI(){
+  const out=document.getElementById('sync-logged-out'), inn=document.getElementById('sync-logged-in'), btn=document.getElementById('btn-sync');
+  if(!out)return;
+  if(fbUser){
+    out.style.display='none'; inn.style.display='block';
+    document.getElementById('sync-user').textContent=fbUser.email;
+    document.getElementById('sync-status').textContent=lastSyncTxt||'Aguardando a primeira sincronização…';
+    if(btn)btn.textContent='Sincronizado';
+  } else {
+    out.style.display='block'; inn.style.display='none';
+    if(btn)btn.textContent='Sincronizar';
+  }
+}
+
 /* ── SERVICE WORKER ── */
 if('serviceWorker'in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 
 checkAndInit();
 handleTransferLink();
+initCloud();
 </script>
 </body>
 </html>
