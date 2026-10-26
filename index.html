@@ -443,7 +443,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
     <div id="setup-step2" style="display:none">
       
       <div class="setup-title">Dados anteriores (opcional)</div>
-      <div class="setup-desc">Tem os PDFs do cartão de ponto do RH? Importe para trazer o histórico. <strong>Pode pular</strong> — dá para importar depois, a qualquer momento, pelo botão "Importar RH".</div>
+      <div class="setup-desc">Tem os PDFs do cartão de ponto do RH? Importe para trazer o histórico. <strong>Pode pular</strong> — dá para importar depois, a qualquer momento, pelo botão "Importar anexo".</div>
 
       <div id="pdf-drop-zone" onclick="document.getElementById('pdf-file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
         
@@ -505,7 +505,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       </div>
       <div class="hdr-actions">
         <button class="btn-outline" id="btn-sync" style="display:none" onclick="showSyncModal()" title="Sincronizar entre celular e computador">Sincronizar</button>
-        <button class="btn-outline" onclick="showRHImport()" title="Importar PDFs do cartão de ponto do RH">Importar RH</button>
+        <button class="btn-outline" onclick="showRHImport()" title="Importar PDFs do cartão de ponto do RH">Importar anexo</button>
         <button class="btn-outline" onclick="showShareGuide()" title="Como compartilhar">Compartilhar</button>
         <button class="btn-outline" onclick="showBackupModal()" title="Exportar / Importar dados">Backup</button>
       </div>
