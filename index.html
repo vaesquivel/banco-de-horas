@@ -143,6 +143,8 @@ h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#12284D,#2e
 .tbtn.active-absent{background:var(--red-bg);color:var(--red);border-color:var(--red-bd);font-weight:600}
 .tbtn.active-comp{background:var(--slate-bg);color:var(--slate);border-color:var(--slate-bd);font-weight:600}
 .time-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.time-grid>div{min-width:0}
+input[type="time"]{min-width:0;max-width:100%}
 input[type="time"],input[type="text"],input[type="date"],input[type="number"]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:var(--mono);outline:none;transition:border-color .15s,box-shadow .15s}
 input[type="text"],input[type="date"]{font-family:var(--sans)}
 input::placeholder{color:var(--muted2)}
@@ -360,6 +362,8 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <div class="setup-title">Banco de Horas</div>
       <div class="setup-desc">Configure suas informações. Você poderá editar a qualquer momento.</div>
 
+      <button class="btn-outline" style="width:100%;margin-bottom:18px;justify-content:center;padding:12px" onclick="importFromLinkPrompt()">Já uso em outro aparelho — importar tudo pelo link</button>
+
       <span class="setup-section-label">Identificação</span>
       <div class="field-group">
         <span class="field-label">Seu nome</span>
@@ -421,8 +425,8 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
     <!-- STEP 2: Import PDF -->
     <div id="setup-step2" style="display:none">
       
-      <div class="setup-title">Dados anteriores</div>
-      <div class="setup-desc">Você tem o PDF do banco de horas dos meses anteriores (jan–jun)? Importe para manter o histórico. <strong>Isso é opcional.</strong></div>
+      <div class="setup-title">Dados anteriores (opcional)</div>
+      <div class="setup-desc">Tem os PDFs do cartão de ponto do RH? Importe para trazer o histórico. <strong>Pode pular</strong> — dá para importar depois, a qualquer momento, pelo botão "Importar RH".</div>
 
       <div id="pdf-drop-zone" onclick="document.getElementById('pdf-file-input').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
         
@@ -458,7 +462,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
 
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
         <button class="btn-save" id="btn-confirm-import" style="display:none" onclick="finishSetupWithImport()">Importar e começar</button>
-        <button class="btn-save" onclick="finishSetupSkipImport()" id="btn-skip-import">Começar do zero (julho) →</button>
+        <button class="btn-save" onclick="finishSetupSkipImport()" id="btn-skip-import">Pular — começar sem histórico →</button>
         <button class="btn-ghost" onclick="backToStep1()">← Voltar</button>
       </div>
     </div>
@@ -1543,6 +1547,18 @@ async function copyTransferLink(){
     showToast('Link copiado — envie para você e abra no celular');
   }catch{ prompt('Copie o link:',url); }
 }
+/* Na tela de configuração: colar o link de transferência (ou JSON) para migrar */
+function importFromLinkPrompt(){
+  const txt=prompt('Cole aqui o link de transferência (ou o JSON do backup):');
+  if(!txt||!txt.trim()) return;
+  document.getElementById('backup-json-in').value=txt.trim();
+  importBackupJson();
+  setTimeout(()=>{
+    const err=document.getElementById('backup-import-err');
+    if(err.style.display==='block') showToast(err.textContent);
+  },900);
+}
+
 async function handleTransferLink(){
   const m=location.hash.match(/^#t=(.+)$/);
   if(!m) return;
@@ -1960,7 +1976,7 @@ function showPDFResult(recs, numFiles) {
   document.getElementById('pdf-result-title').textContent=`${recs.length} registros encontrados`;
   document.getElementById('pdf-result').style.display='block';
   document.getElementById('btn-confirm-import').style.display='block';
-  document.getElementById('btn-skip-import').textContent='Pular e começar do zero (julho)';
+  document.getElementById('btn-skip-import').textContent='Ignorar PDFs e começar sem histórico';
   // Mostra campo de saldo inicial com data do primeiro registro
   if(recs.length>0){
     const[fy,fm,fd]=recs[0].date.split('-');
@@ -1993,7 +2009,7 @@ function clearPDFImport(){
   document.getElementById('pdf-result').style.display='none';
   document.getElementById('ob-row').style.display='none';
   document.getElementById('btn-confirm-import').style.display='none';
-  document.getElementById('btn-skip-import').textContent='Começar do zero (julho) →';
+  document.getElementById('btn-skip-import').textContent='Pular — começar sem histórico →';
   document.getElementById('pdf-drop-zone').querySelector('.drop-text').innerHTML='Arraste os PDFs aqui ou <strong>clique para selecionar</strong>';
   hidePDFError();
   document.getElementById('pdf-file-input').value='';
