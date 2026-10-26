@@ -44,6 +44,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 #avatar img{width:100%;height:100%;object-fit:cover}
 #greeting{font-family:var(--display);font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.02em}
 #balance-cards{margin-bottom:4px}
+#backup-hint{background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:12px;padding:12px 16px;margin-bottom:14px;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text);line-height:1.5}
+#backup-hint .bh-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
 h1{font-family:var(--display);font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
 h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#12284D,#2e4a75);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .subtitle{font-size:12px;color:var(--muted);margin-top:5px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
@@ -117,6 +119,7 @@ h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#12284D,#2e
 .dr-bal{padding:0 16px 0 4px;font-family:var(--mono);font-weight:600;font-size:13px;text-align:right;letter-spacing:.02em}
 .type-chip{display:inline-block;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:600;border:1px solid;white-space:nowrap;letter-spacing:.04em;text-transform:uppercase}
 .warn-chip{display:inline-block;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:600;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);white-space:nowrap;margin-left:4px}
+.ho-chip{display:inline-block;border-radius:4px;padding:2px 6px;font-size:10px;font-weight:700;background:#2e4a75;color:#fff;border:1px solid #2e4a75;white-space:nowrap;margin-left:4px;letter-spacing:.04em}
 
 /* ── TOAST ── */
 #toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:999;white-space:nowrap;box-shadow:var(--shadow-md)}
@@ -510,6 +513,14 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
     </label>
   </div>
 
+  <div id="backup-hint" style="display:none">
+    <span>Faz mais de um mês desde o seu último backup. Leva menos de um minuto.</span>
+    <div class="bh-actions">
+      <button class="btn-outline" onclick="showBackupModal()">Fazer backup</button>
+      <button class="btn-ghost" onclick="snoozeBackupHint()">Agora não</button>
+    </div>
+  </div>
+
   <div id="balance-cards">
     <div class="bal-card" id="card-total">
       <div class="bc-label">Banco Acumulado</div>
@@ -525,13 +536,16 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
   <div id="chips">
     <span class="chip" id="chip-worked">—</span>
     <span class="chip" id="chip-abono">—</span>
+    <span class="chip" id="chip-hoc">—</span>
     <span class="chip" id="chip-hol">—</span>
     <span class="chip" id="chip-abs">—</span>
   </div>
   <div id="top-bar">
     <div id="legend">
       <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Trabalhado</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Abono / HO</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Abono</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#2e4a75"></div>Home Office</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--slate)"></div>Compensação</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--purple)"></div>Feriado</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Falta</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Hoje</div>
@@ -552,7 +566,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <span style="color:var(--muted2)">Desenvolvido com <span style="color:#e05a2b;font-weight:600">Claude IA</span> · Anthropic</span>
     </div>
   </div>
-  <span class="footer-tag">Banco de Horas v1.6</span>
+  <span class="footer-tag">Banco de Horas v1.7</span>
 </footer>
 
 <!-- ── MODAL registro ── -->
@@ -705,6 +719,10 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
           <button class="btn-save" style="flex:1;min-width:140px" onclick="generateBackupJson()">Gerar JSON</button>
           <button class="btn-outline" style="flex:1;min-width:140px" onclick="downloadBackupJson()">Baixar .json</button>
+          <button class="btn-outline" style="flex:1;min-width:140px" onclick="copyTransferLink()">Copiar link p/ celular</button>
+        </div>
+        <div style="margin-top:10px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.6">
+          <strong style="color:var(--text)">Trocar de aparelho?</strong> Toque em "Copiar link p/ celular" e envie o link para você mesma (WhatsApp, e-mail). Ao abrir no outro aparelho, o app pergunta se quer importar tudo — registros, configuração e horários. O link contém seus dados: não compartilhe com outras pessoas.
         </div>
         <div style="margin-top:14px;padding:10px 12px;background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:8px;font-size:11px;color:var(--blue);line-height:1.6">
           <strong>Para comparar com o app da aba anônima:</strong><br>
@@ -1110,7 +1128,7 @@ function render(){
   const startDs=setup?.startDate;
 
   const weekdays=getWeekdays(selYear,selMonth);
-  let monthBal=0,nWorked=0,nAbono=0,nHol=0,nAbs=0;
+  let monthBal=0,nWorked=0,nAbono=0,nHol=0,nAbs=0,nHOm=0;
   weekdays.forEach(ds=>{
     if(ds>today)return;
     if(startDs&&ds<startDs)return; // before tracking start — don't count
@@ -1119,6 +1137,7 @@ function render(){
     const type=r?.type||(autoHol?'holiday':'absent');
     const b=r?getBalance(r):(autoHol?0:-WORK_MIN);
     if(b!==null)monthBal+=b;
+    if(r?.isHO)nHOm++;
     if(type==='worked')nWorked++;
     else if(type==='abono')nAbono++;
     else if(type==='holiday')nHol++;
@@ -1140,6 +1159,7 @@ function render(){
   const updChip=(id,color,label)=>{const el=document.getElementById(id);el.textContent=label;el.style.color=color;};
   updChip('chip-worked','var(--green)',`${nWorked} trabalhados`);
   updChip('chip-abono', 'var(--blue)', `${nAbono} abonos`);
+  updChip('chip-hoc',  '#2e4a75',      `${nHOm} home office`);
   updChip('chip-hol',   'var(--purple)',`${nHol} feriados`);
   updChip('chip-abs',   'var(--red)',   `${nAbs} falta(s)`);
 
@@ -1218,7 +1238,7 @@ function render(){
       const hoDate=isHODate(ds);
       const needHO=(hoDay||hoDate)&&(isFuture||isToday)&&!r&&!isBeforeStart&&!autoHol;
       const cfg=CFG[isToday&&!isBeforeStart&&!autoHol?'today':(isFuture||isBeforeStart)?'future':type]||CFG.future;
-      const hoLabel=(r?.isHO||((hoDay||hoDate)&&(type==='abono'||type==='worked')))?'HO · ':'';
+      const showHO=!!r?.isHO;
 
       const row=document.createElement('div');
       row.className='day-row'+(isToday&&!isBeforeStart?' today-row':'')+(isFuture||isBeforeStart?' future':'')+(!isFuture&&!isBeforeStart?' clickable':'');
@@ -1233,7 +1253,7 @@ function render(){
         <div class="dr-arrow">→</div>
         <div class="dr-time">${r?.exit||(!isFuture&&!isBeforeStart?'—':'')}</div>
         <div class="dr-worked" style="color:${wm!==null?(wm>=WORK_MIN?'var(--green)':'var(--red)'):'var(--muted2)'}">${wm!==null?fmtWorked(wm):(isFuture||isBeforeStart?'':'—')}</div>
-        <div class="dr-chip">${(!isFuture&&!isBeforeStart)?`<span class="type-chip" style="color:${cfg.chip};background:${cfg.chipBg};border-color:${cfg.bd}">${hoLabel}${cfg.label}</span>`:''} ${needHO?'<span class="warn-chip">HO</span>':''}</div>
+        <div class="dr-chip">${(!isFuture&&!isBeforeStart)?`<span class="type-chip" style="color:${cfg.chip};background:${cfg.chipBg};border-color:${cfg.bd}">${cfg.label}</span>`:''}${showHO?'<span class="ho-chip">HO</span>':''} ${needHO?'<span class="warn-chip">HO?</span>':''}</div>
         <div class="dr-note">${r?.note||holName||''}</div>
         <div class="dr-bal" style="color:${balance!==null?balColor(balance):'var(--muted2)'}">${balance!==null?fmtBal(balance):(isFuture||isBeforeStart?'':'—')}</div>`;
       block.appendChild(row);
@@ -1242,6 +1262,7 @@ function render(){
   });
 
   renderPunch();
+  checkBackupHint();
 }
 
 /* ── BATER PONTO ── */
@@ -1273,7 +1294,7 @@ function renderPunch(){
   }
   btn.style.display='';
   if(r&&r.type!=='worked'){
-    const lbl={abono:'Abono / HO',holiday:'Feriado',absent:'Falta',comp:'Compensação de banco'}[r.type]||r.type;
+    const lbl={abono:'Abono',holiday:'Feriado',absent:'Falta',comp:'Compensação de banco'}[r.type]||r.type;
     st.textContent=`Hoje está marcado como ${lbl}`;
     btn.textContent='Editar dia'; btn.className='punch-btn edit wide';
   } else if(!r||!r.entry){
@@ -1306,7 +1327,7 @@ function renderPunch(){
     times.style.display='flex';
   } else {
     const b=getBalance(r);
-    st.innerHTML=`Dia completo: ${r.entry} → ${r.exit} · saldo <strong style="color:${balColor(b)}">${fmtBal(b)}</strong>`;
+    st.innerHTML=`Dia completo${r.isHO?' em Home Office':''}: ${r.entry} → ${r.exit} · saldo <strong style="color:${balColor(b)}">${fmtBal(b)}</strong>`;
     btn.textContent='Ajustar horários'; btn.className='punch-btn edit wide';
   }
 }
@@ -1491,10 +1512,70 @@ function switchBackupTab(tab){
   document.getElementById('tab-import').className='btn-tab'+(tab==='import'?' active':'');
 }
 function generateBackupJson(){
-  const out=JSON.stringify(records,null,2);
+  let photo=null; try{photo=localStorage.getItem(PHOTO_KEY);}catch{}
+  const out=JSON.stringify({app:'banco-de-horas',version:2,exportedAt:todayStr(),setup,photo,records},null,2);
   document.getElementById('backup-json-out').value=out;
-  showToast(`${records.length} registros prontos para exportar`);
+  showToast(`${records.length} registros + configuração prontos para exportar`);
 }
+/* ── LINK DE TRANSFERÊNCIA (migrar de aparelho) ── */
+async function gzipB64(str){
+  const cs=new CompressionStream('gzip');
+  const ab=await new Response(new Blob([str]).stream().pipeThrough(cs)).arrayBuffer();
+  let s=''; new Uint8Array(ab).forEach(b=>s+=String.fromCharCode(b));
+  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function gunzipB64(b64){
+  b64=b64.replace(/-/g,'+').replace(/_/g,'/');
+  const bin=atob(b64), u8=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+  const ds=new DecompressionStream('gzip');
+  const ab=await new Response(new Blob([u8]).stream().pipeThrough(ds)).arrayBuffer();
+  return new TextDecoder().decode(ab);
+}
+async function copyTransferLink(){
+  if(!setup){ showToast('Configure o app primeiro'); return; }
+  if(!('CompressionStream'in window)){ showToast('Navegador sem suporte — use Gerar JSON + Importar'); return; }
+  const payload=JSON.stringify({app:'banco-de-horas',version:2,setup,records});
+  const url=location.origin+location.pathname+'#t='+await gzipB64(payload);
+  try{
+    await navigator.clipboard.writeText(url);
+    markBackupDone();
+    showToast('Link copiado — envie para você e abra no celular');
+  }catch{ prompt('Copie o link:',url); }
+}
+async function handleTransferLink(){
+  const m=location.hash.match(/^#t=(.+)$/);
+  if(!m) return;
+  history.replaceState(null,'',location.pathname+location.search);
+  try{
+    if(!('DecompressionStream'in window)) throw new Error('sem suporte');
+    const p=JSON.parse(await gunzipB64(m[1]));
+    if(!p||!Array.isArray(p.records)) throw new Error('formato');
+    const ok=confirm(`Importar dados deste link? ${p.records.length} registros${p.setup?' + configuração':''}. Isso substitui os dados atuais deste aparelho.`);
+    if(!ok) return;
+    if(p.setup&&p.setup.name){ try{localStorage.setItem(SETUP_KEY,JSON.stringify(p.setup));}catch{} }
+    try{localStorage.setItem(DATA_KEY,JSON.stringify(p.records));}catch{}
+    checkAndInit();
+    showToast(`${p.records.length} registros importados do link`);
+  }catch(e){ showToast('Não foi possível ler o link de transferência'); }
+}
+
+/* ── LEMBRETE MENSAL DE BACKUP ── */
+const LASTBK_KEY='bdh_last_backup', BKSNOOZE_KEY='bdh_backup_snooze';
+const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);
+function markBackupDone(){ try{localStorage.setItem(LASTBK_KEY,todayStr());}catch{} checkBackupHint(); }
+function snoozeBackupHint(){ try{localStorage.setItem(BKSNOOZE_KEY,todayStr());}catch{} document.getElementById('backup-hint').style.display='none'; }
+function checkBackupHint(){
+  const el=document.getElementById('backup-hint');
+  if(!setup||records.length<5){ el.style.display='none'; return; }
+  const today=todayStr();
+  let last=null,snooze=null;
+  try{ last=localStorage.getItem(LASTBK_KEY); snooze=localStorage.getItem(BKSNOOZE_KEY); }catch{}
+  if(!last){ try{localStorage.setItem(LASTBK_KEY,today);}catch{} el.style.display='none'; return; }
+  if(snooze&&daysBetween(snooze,today)<7){ el.style.display='none'; return; }
+  el.style.display = daysBetween(last,today)>=30 ? 'flex' : 'none';
+}
+
 function copyBackupJson(){
   const txt=document.getElementById('backup-json-out').value;
   if(!txt){showToast('Clique em "Gerar JSON" primeiro');return;}
@@ -1502,11 +1583,13 @@ function copyBackupJson(){
     const ok=document.getElementById('backup-copy-ok');
     ok.style.display='block';
     setTimeout(()=>ok.style.display='none',2000);
+    markBackupDone();
   }).catch(()=>showToast('Copie manualmente'));
 }
 function downloadBackupJson(){
   const txt=document.getElementById('backup-json-out').value;
   if(!txt){showToast('Clique em "Gerar JSON" primeiro');return;}
+  markBackupDone();
   const blob=new Blob([txt],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -1520,13 +1603,26 @@ function importBackupJson(){
   errEl.style.display='none';
   try{
     const parsed=JSON.parse(txt);
-    if(!Array.isArray(parsed))throw new Error('Formato inválido: esperado array de registros');
-    if(parsed.length&&!parsed[0].date)throw new Error('Formato inválido: cada item deve ter "date"');
-    records=[...parsed];
+    let recs, newSetup=null, newPhoto=null;
+    if(Array.isArray(parsed)){
+      recs=parsed; // formato antigo: só registros
+    } else if(parsed&&Array.isArray(parsed.records)){
+      recs=parsed.records; newSetup=parsed.setup||null; newPhoto=parsed.photo||null;
+    } else {
+      throw new Error('Formato inválido: cole o JSON gerado pelo botão Exportar');
+    }
+    if(recs.length&&!recs[0].date)throw new Error('Formato inválido: cada registro deve ter "date"');
+    records=[...recs];
+    if(newSetup&&newSetup.name){
+      setup={...newSetup};
+      try{localStorage.setItem(SETUP_KEY,JSON.stringify(setup));}catch{}
+    }
+    if(newPhoto){ try{localStorage.setItem(PHOTO_KEY,newPhoto);}catch{} }
     save();
+    if(setup){ applySetup(); document.getElementById('setup-overlay').style.display='none'; }
     render();
     document.getElementById('backup-overlay').classList.remove('open');
-    showToast(`${records.length} registros importados com sucesso`);
+    showToast(`${records.length} registros importados${newSetup?' + configuração':''}`);
   }catch(err){
     errEl.textContent='Erro: '+err.message;
     errEl.style.display='block';
@@ -1891,6 +1987,7 @@ function clearPDFImport(){
 if('serviceWorker'in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{});}
 
 checkAndInit();
+handleTransferLink();
 </script>
 </body>
 </html>
