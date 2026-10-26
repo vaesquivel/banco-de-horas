@@ -138,6 +138,7 @@ h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#12284D,#2e
 .tbtn.active-abono{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd);font-weight:600}
 .tbtn.active-holiday{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd);font-weight:600}
 .tbtn.active-absent{background:var(--red-bg);color:var(--red);border-color:var(--red-bd);font-weight:600}
+.tbtn.active-comp{background:var(--slate-bg);color:var(--slate);border-color:var(--slate-bd);font-weight:600}
 .time-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 input[type="time"],input[type="text"],input[type="date"],input[type="number"]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:var(--mono);outline:none;transition:border-color .15s,box-shadow .15s}
 input[type="text"],input[type="date"]{font-family:var(--sans)}
@@ -326,6 +327,8 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
 .notify-row{color:#9fb0cc}
 .notify-row span{color:#8fa2c0}
 .notify-row input{accent-color:#fff}
+#punch-card .btn-ghost{color:#b9c6dc;margin-top:4px}
+#punch-card .btn-ghost:hover{color:#fff}
 @media(max-width:680px){
   #punch-card{margin:0 -10px 16px;border-radius:0 0 26px 26px;padding:12px 16px 26px}
   .punch-clock{font-size:54px}
@@ -401,6 +404,11 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
           <button class="ho-day-btn" data-dow="5" onclick="toggleHODay(this)">Sex</button>
         </div>
         <div style="font-size:11px;color:var(--muted2);margin-top:8px;line-height:1.5">Pode ter mais de um HO na mesma semana — basta marcar a opção "Home Office" ao registrar qualquer dia.</div>
+      </div>
+      <div class="field-group">
+        <span class="field-label">Datas de HO marcadas pela empresa <span class="opt-label">(dd/mm, separadas por vírgula)</span></span>
+        <input type="text" id="setup-ho-dates" placeholder="Ex: 04/09, 18/09, 09/10"/>
+        <div style="font-size:11px;color:var(--muted2);margin-top:5px;line-height:1.5">Nesses dias o app lembra: banco positivo deve virar folga de compensação e horas extras não são permitidas.</div>
       </div>
       </div>
 
@@ -491,10 +499,11 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
     <div class="punch-status" id="punch-status">—</div>
     <div class="punch-times" id="punch-times" style="display:none">
       <div class="pt-item"><span class="pt-label">Saída prevista</span><span class="pt-val" id="pt-exit">—</span></div>
-      <div class="pt-item"><span class="pt-label">Limite 2h extra</span><span class="pt-val" id="pt-limit">—</span></div>
+      <div class="pt-item"><span class="pt-label" id="pt-limit-label">Limite 2h extra</span><span class="pt-val" id="pt-limit">—</span></div>
       <div class="pt-item"><span class="pt-label" id="pt-count-label">Falta</span><span class="pt-val" id="pt-count">—</span></div>
     </div>
-    <button class="punch-btn entry" id="btn-punch" onclick="punchNow()">▶ Registrar entrada</button>
+    <button class="punch-btn entry" id="btn-punch" onclick="punchNow()">Entrada</button>
+    <button class="btn-ghost" id="btn-comp" style="display:none" onclick="markComp()">Marcar hoje como compensação de banco</button>
     <label class="notify-row" id="notify-row">
       <input type="checkbox" id="chk-notify" onchange="toggleNotify(this)"/>
       Avisar 10 min antes da saída e do limite de 2h&nbsp;<span>(com o app aberto)</span>
@@ -543,7 +552,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <span style="color:var(--muted2)">Desenvolvido com <span style="color:#e05a2b;font-weight:600">Claude IA</span> · Anthropic</span>
     </div>
   </div>
-  <span class="footer-tag">Banco de Horas v1.5</span>
+  <span class="footer-tag">Banco de Horas v1.6</span>
 </footer>
 
 <!-- ── MODAL registro ── -->
@@ -556,6 +565,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <div class="type-btns">
         <button class="tbtn" data-type="worked"  onclick="setType('worked')">Trabalhado</button>
         <button class="tbtn" data-type="abono"   onclick="setType('abono')">Abono</button>
+        <button class="tbtn" data-type="comp"    onclick="setType('comp')">Compensação</button>
         <button class="tbtn" data-type="holiday" onclick="setType('holiday')">Feriado</button>
         <button class="tbtn" data-type="absent"  onclick="setType('absent')">Falta</button>
       </div>
@@ -744,6 +754,17 @@ const pad      = n => String(n).padStart(2,'0');
 /* Recursos que a empresa do usuário usa (abono / feriados automáticos / home office) */
 const feat     = k => setup?.features ? setup.features[k]!==false : true;
 const isHODay  = dow => feat('ho') && (setup?.hoDays??[]).includes(dow);
+/* Datas específicas de HO marcadas pela empresa (ex.: comunicado DP/RH) */
+const isHODate = ds => feat('ho') && (setup?.hoDates??[]).includes(ds);
+function parseHODates(txt){
+  const y=new Date().getFullYear(), out=[];
+  (txt||'').split(/[,;\n]+/).map(t=>t.trim()).filter(Boolean).forEach(t=>{
+    const m=t.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/);
+    if(m) out.push(`${m[3]||y}-${pad(+m[2])}-${pad(+m[1])}`);
+  });
+  return [...new Set(out)].sort();
+}
+const fmtHODates = arr => (arr||[]).map(ds=>`${ds.slice(8,10)}/${ds.slice(5,7)}`).join(', ');
 
 /* July cutover — always July 1 of the current year */
 function julyStart() {
@@ -762,7 +783,7 @@ const getRMap   = arr => { const m={}; (arr||records).forEach(r=>m[r.date]=r); r
 const getBalance = r => {
   if(!r)return null;
   if(r.type==='holiday'||r.type==='abono')return 0;
-  if(r.type==='absent')return -WORK_MIN;
+  if(r.type==='absent'||r.type==='comp')return -WORK_MIN;
   if(r.type==='worked'&&r.entry&&r.exit)return(toMin(r.exit)-toMin(r.entry))-WORK_MIN;
   return null;
 };
@@ -770,7 +791,7 @@ const getWorked = r => {
   if(!r)return null;
   if(r.type==='worked'&&r.entry&&r.exit)return toMin(r.exit)-toMin(r.entry);
   if(r.type==='holiday'||r.type==='abono')return WORK_MIN;
-  if(r.type==='absent')return 0;
+  if(r.type==='absent'||r.type==='comp')return 0;
   return null;
 };
 
@@ -794,6 +815,7 @@ function buildHolidaysBR(year) {
   h[`${year}-10-12`]='N. S. Aparecida';
   h[`${year}-11-02`]='Finados';
   h[`${year}-11-15`]='Proc. da República';
+  h[`${year}-11-20`]='Consciência Negra';
   h[`${year}-12-25`]='Natal';
   const easter=calcEaster(year);
   const ds=n=>{const x=new Date(easter);x.setDate(x.getDate()+n);return`${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`;};
@@ -850,6 +872,11 @@ function loadSetup() {
   if(setup&&!setup.hoDays)   setup.hoDays=[];
   if(setup&&setup.openingBalance===undefined)setup.openingBalance=0;
   if(setup&&!setup.features) setup.features={abono:true,holiday:true,ho:true};
+  // Usuários existentes recebem o calendário de HO Mr.Cat set–nov/2026 (editável em "editar")
+  if(setup&&!setup.hoDates){
+    setup.hoDates=['2026-09-04','2026-09-18','2026-10-09','2026-10-30','2026-11-06','2026-11-23'];
+    try{localStorage.setItem(SETUP_KEY,JSON.stringify(setup));}catch{}
+  }
 }
 
 function updateStepDots(step) {
@@ -886,6 +913,7 @@ function commitSetup(openingBalance, importedRecords) {
     : (document.getElementById('setup-date').value || julyStart());
   setup = { name, startDate, entryTime:entry, exitTime:exit,
             hoDays:[...selectedHODays].sort((a,b)=>a-b),
+            hoDates: parseHODates(document.getElementById('setup-ho-dates').value),
             openingBalance: openingBalance||0,
             features: {...featState} };
   localStorage.setItem(SETUP_KEY,JSON.stringify(setup));
@@ -932,6 +960,7 @@ function editSetup() {
     b.classList.toggle('active',selectedHODays.includes(parseInt(b.dataset.dow))));
   featState={...(setup?.features||{abono:true,holiday:true,ho:true})};
   syncFeatButtons();
+  document.getElementById('setup-ho-dates').value=fmtHODates(setup?.hoDates);
   clearPDFImport();
   pendingPDFRecords=[];
   // Show step 1 in edit mode with direct save
@@ -955,6 +984,7 @@ function saveSetupDirect() {
   const obVal=parseBalStr(document.getElementById('setup-ob').value);
   setup.name=name; setup.startDate=date; setup.entryTime=entry; setup.exitTime=exit;
   setup.hoDays=[...selectedHODays].sort((a,b)=>a-b);
+  setup.hoDates=parseHODates(document.getElementById('setup-ho-dates').value);
   setup.openingBalance=obVal;
   setup.features={...featState};
   localStorage.setItem(SETUP_KEY,JSON.stringify(setup));
@@ -1024,6 +1054,8 @@ function checkAndInit() {
   document.querySelector('#setup-step1 .btn-save').textContent='Próximo →';
   document.querySelector('#setup-step1 .btn-save').onclick=goToImportStep;
   if(!setup){
+    // Sugestão inicial: calendário de HO Mr.Cat set–nov/2026 (editável)
+    document.getElementById('setup-ho-dates').value='04/09, 18/09, 09/10, 30/10, 06/11, 23/11';
     document.getElementById('setup-overlay').style.display='flex';
   } else {
     document.getElementById('setup-overlay').style.display='none';
@@ -1090,7 +1122,7 @@ function render(){
     if(type==='worked')nWorked++;
     else if(type==='abono')nAbono++;
     else if(type==='holiday')nHol++;
-    else nAbs++;
+    else if(type==='absent')nAbs++;
   });
 
   const cum=computeCumulative();
@@ -1142,6 +1174,7 @@ function render(){
   const CFG={
     worked: {chip:'var(--green)', chipBg:'var(--green-bg)', bd:'var(--green-bd)', rowBg:'var(--row-worked)',  label:'Trabalhado'},
     abono:  {chip:'var(--blue)',  chipBg:'var(--blue-bg)',  bd:'var(--blue-bd)',  rowBg:'var(--row-abono)',   label:'Abono'},
+    comp:   {chip:'var(--slate)', chipBg:'var(--slate-bg)', bd:'var(--slate-bd)', rowBg:'rgba(100,116,139,.04)', label:'Compensação'},
     holiday:{chip:'var(--purple)',chipBg:'var(--purple-bg)',bd:'var(--purple-bd)',rowBg:'var(--row-holiday)', label:'Feriado'},
     absent: {chip:'var(--red)',   chipBg:'var(--red-bg)',   bd:'var(--red-bd)',   rowBg:'var(--row-absent)',  label:'Falta'},
     future: {chip:'var(--muted2)',chipBg:'transparent',     bd:'transparent',     rowBg:'transparent',        label:''},
@@ -1182,9 +1215,10 @@ function render(){
       const type=r?.type||(isFuture||isBeforeStart?'future':autoHol?'holiday':isPast?'absent':'today');
       const balance=r?getBalance(r):(isPast&&!isBeforeStart?(autoHol?0:-WORK_MIN):isToday&&autoHol?0:null);
       const wm=r?getWorked(r):(autoHol?WORK_MIN:null);
-      const needHO=hoDay&&(isFuture||isToday)&&!r&&!isBeforeStart&&!autoHol;
+      const hoDate=isHODate(ds);
+      const needHO=(hoDay||hoDate)&&(isFuture||isToday)&&!r&&!isBeforeStart&&!autoHol;
       const cfg=CFG[isToday&&!isBeforeStart&&!autoHol?'today':(isFuture||isBeforeStart)?'future':type]||CFG.future;
-      const hoLabel=(r?.isHO||(hoDay&&(type==='abono'||type==='worked')))?'HO · ':'';
+      const hoLabel=(r?.isHO||((hoDay||hoDate)&&(type==='abono'||type==='worked')))?'HO · ':'';
 
       const row=document.createElement('div');
       row.className='day-row'+(isToday&&!isBeforeStart?' today-row':'')+(isFuture||isBeforeStart?' future':'')+(!isFuture&&!isBeforeStart?' clickable':'');
@@ -1223,8 +1257,11 @@ function renderPunch(){
   document.getElementById('chk-notify').checked=!!setup.notifyExit;
   const btn=document.getElementById('btn-punch'), st=document.getElementById('punch-status');
   const times=document.getElementById('punch-times');
+  const compBtn=document.getElementById('btn-comp');
   const r=records.find(x=>x.date===today);
+  const hoToday=isHODate(today);
   times.style.display='none';
+  compBtn.style.display='none';
   if(dow===0||dow===6){
     st.textContent='Fim de semana — bom descanso';
     btn.style.display='none'; return;
@@ -1236,29 +1273,51 @@ function renderPunch(){
   }
   btn.style.display='';
   if(r&&r.type!=='worked'){
-    const lbl={abono:'Abono / HO',holiday:'Feriado',absent:'Falta'}[r.type]||r.type;
+    const lbl={abono:'Abono / HO',holiday:'Feriado',absent:'Falta',comp:'Compensação de banco'}[r.type]||r.type;
     st.textContent=`Hoje está marcado como ${lbl}`;
     btn.textContent='Editar dia'; btn.className='punch-btn edit wide';
   } else if(!r||!r.entry){
-    st.textContent='Você ainda não registrou hoje';
+    if(hoToday){
+      const cum=computeCumulative();
+      if(cum>0){
+        st.innerHTML=`Home Office hoje — banco positivo (<strong>${fmtBal(cum)}</strong>): pela política, use o dia como folga de compensação`;
+        compBtn.style.display='';
+      } else {
+        st.textContent='Home Office hoje — QG fechado · horas extras não permitidas';
+      }
+    } else {
+      st.textContent='Você ainda não registrou hoje';
+    }
     btn.textContent='Entrada'; btn.className='punch-btn entry';
   } else if(!r.exit){
-    st.innerHTML=`Entrada registrada às <strong>${r.entry}</strong>`;
+    st.innerHTML=`Entrada registrada às <strong>${r.entry}</strong>${hoToday?' · Home Office — sem extras hoje':''}`;
     btn.textContent='Saída'; btn.className='punch-btn exit';
     // Previsão de saída + limite legal de 2h extras, em tempo real
-    const exitN=toMin(r.entry)+WORK_MIN, limit=exitN+120, now=toMin(nowHHMM());
+    const exitN=toMin(r.entry)+WORK_MIN, now=toMin(nowHHMM());
+    const limit=hoToday?exitN:exitN+120;
     document.getElementById('pt-exit').textContent=fmtWorked(exitN);
-    document.getElementById('pt-limit').textContent=fmtWorked(limit);
+    const limLab=document.getElementById('pt-limit-label'), limVal=document.getElementById('pt-limit');
+    if(hoToday){ limLab.textContent='Extras hoje'; limVal.textContent='vedadas'; limVal.style.color='var(--red)'; }
+    else { limLab.textContent='Limite 2h extra'; limVal.textContent=fmtWorked(limit); limVal.style.color=''; }
     const lab=document.getElementById('pt-count-label'), val=document.getElementById('pt-count');
     if(now<exitN){ lab.textContent='Falta'; val.textContent=fmtWorked(exitN-now); val.style.color='var(--text)'; }
     else if(now<limit){ lab.textContent='Até o limite'; val.textContent=fmtWorked(limit-now); val.style.color='var(--red)'; }
-    else { lab.textContent='Limite de 2h'; val.textContent='excedido'; val.style.color='var(--red)'; }
+    else { lab.textContent=hoToday?'Saída prevista':'Limite de 2h'; val.textContent=hoToday?'passou':'excedido'; val.style.color='var(--red)'; }
     times.style.display='flex';
   } else {
     const b=getBalance(r);
     st.innerHTML=`Dia completo: ${r.entry} → ${r.exit} · saldo <strong style="color:${balColor(b)}">${fmtBal(b)}</strong>`;
     btn.textContent='Ajustar horários'; btn.className='punch-btn edit wide';
   }
+}
+
+function markComp(){
+  const today=todayStr();
+  records=records.filter(x=>x.date!==today);
+  records.push({date:today,type:'comp',entry:null,exit:null,note:'Compensação de banco (HO)',isHO:false});
+  records.sort((a,b)=>a.date.localeCompare(b.date));
+  save(); render();
+  showToast('Dia marcado como compensação de banco');
 }
 
 function punchNow(){
@@ -1269,7 +1328,7 @@ function punchNow(){
   if(r&&r.type!=='worked'){ openModal(today,r); return; }
   if(!r||!r.entry){
     records=records.filter(x=>x.date!==today);
-    records.push({date:today,type:'worked',entry:t,exit:null,note:'',isHO:isHODay(dow)});
+    records.push({date:today,type:'worked',entry:t,exit:null,note:'',isHO:isHODay(dow)||isHODate(today)});
     records.sort((a,b)=>a.date.localeCompare(b.date));
     save(); render();
     showToast(`Entrada registrada às ${t}`);
@@ -1308,14 +1367,15 @@ function checkExitAlerts(){
   const r=records.find(x=>x.date===today);
   if(!r||r.type!=='worked'||!r.entry||r.exit) return;
   const now=toMin(nowHHMM());
+  const hoToday=isHODate(today);
   const exitN=toMin(r.entry)+WORK_MIN, limit=exitN+120;
   let flags={}; try{flags=JSON.parse(localStorage.getItem('bdh_notified')||'{}');}catch{}
   if(flags.date!==today) flags={date:today};
   if(!flags.exit&&now>=exitN-10&&now<exitN){
     flags.exit=true;
-    notifyMsg('Quase hora de sair',`Saída prevista às ${fmtWorked(exitN)} — faltam ${exitN-now} min`);
+    notifyMsg('Quase hora de sair',`Saída prevista às ${fmtWorked(exitN)} — faltam ${exitN-now} min${hoToday?' (HO: sem extras hoje)':''}`);
   }
-  if(!flags.limit&&now>=limit-10&&now<limit){
+  if(!hoToday&&!flags.limit&&now>=limit-10&&now<limit){
     flags.limit=true;
     notifyMsg('Limite de 2h extras',`Você atinge o limite legal às ${fmtWorked(limit)} — faltam ${limit-now} min`);
   }
