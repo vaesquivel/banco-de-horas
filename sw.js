@@ -1,4 +1,4 @@
-const CACHE = 'bdh-v20';
+const CACHE = 'bdh-v21';
 const URLS  = ['./', './index.html', './manifest.json', './icon.svg', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', ev => {
