@@ -144,7 +144,8 @@ h1 .h1-icon{width:32px;height:32px;background:linear-gradient(135deg,#12284D,#2e
 .tbtn.active-comp{background:var(--slate-bg);color:var(--slate);border-color:var(--slate-bd);font-weight:600}
 .time-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .time-grid>div{min-width:0}
-input[type="time"]{min-width:0;max-width:100%}
+/* iOS: inputs de data/hora têm largura intrínseca maior que a célula — forçar encaixe */
+input[type="time"],input[type="date"]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;box-sizing:border-box;height:44px;text-align:left}
 input[type="time"],input[type="text"],input[type="date"],input[type="number"]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:14px;font-family:var(--mono);outline:none;transition:border-color .15s,box-shadow .15s}
 input[type="text"],input[type="date"]{font-family:var(--sans)}
 input::placeholder{color:var(--muted2)}
