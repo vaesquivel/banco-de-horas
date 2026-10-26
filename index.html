@@ -731,7 +731,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       </div>
 
       <div id="backup-import-panel" style="display:none">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Cole o JSON exportado de outro app ou de um backup anterior. <strong style="color:var(--red)">Isso substituirá todos os registros atuais.</strong></p>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px">Cole o JSON de um backup <strong>ou o link de transferência</strong> (aquele com #t=…). <strong style="color:var(--red)">Isso substituirá todos os registros atuais.</strong></p>
         <textarea id="backup-json-in" style="width:100%;height:200px;font-family:var(--mono);font-size:11px;resize:vertical;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface2);color:var(--text);line-height:1.4" placeholder='Cole o JSON aqui... (começa com [{"date":'></textarea>
         <div id="backup-import-err" style="display:none;font-size:11px;color:var(--red);margin-top:6px"></div>
         <button class="btn-save" style="margin-top:10px;width:100%" onclick="importBackupJson()">Importar e substituir dados</button>
@@ -1601,6 +1601,22 @@ function importBackupJson(){
   const txt=document.getElementById('backup-json-in').value.trim();
   const errEl=document.getElementById('backup-import-err');
   errEl.style.display='none';
+  // Aceita colar o próprio link de transferência (#t=...) no lugar do JSON
+  const lm=txt.match(/#t=([A-Za-z0-9_-]+)/);
+  if(lm){
+    if(!('DecompressionStream'in window)){
+      errEl.textContent='Erro: este navegador não lê o link — cole o JSON do backup.';
+      errEl.style.display='block'; return;
+    }
+    gunzipB64(lm[1]).then(raw=>{
+      document.getElementById('backup-json-in').value=raw;
+      importBackupJson();
+    }).catch(()=>{
+      errEl.textContent='Erro: link de transferência inválido ou incompleto.';
+      errEl.style.display='block';
+    });
+    return;
+  }
   try{
     const parsed=JSON.parse(txt);
     let recs, newSetup=null, newPhoto=null;
