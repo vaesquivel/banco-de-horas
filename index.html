@@ -433,7 +433,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <div class="field-group">
         <span class="field-label">Datas de HO marcadas pela empresa <span class="opt-label">(dd/mm, separadas por vírgula)</span></span>
         <input type="text" id="setup-ho-dates" placeholder="Ex: 04/09, 18/09, 09/10"/>
-        <div style="font-size:11px;color:var(--muted2);margin-top:5px;line-height:1.5">Nesses dias o app lembra: banco positivo deve virar folga de compensação e horas extras não são permitidas.</div>
+        <div style="font-size:11px;color:var(--muted2);margin-top:5px;line-height:1.5">Nesses dias o app lembra: banco positivo deve virar folga do banco de horas e horas extras não são permitidas.</div>
       </div>
       </div>
 
@@ -529,7 +529,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <div class="pt-item"><span class="pt-label" id="pt-count-label">Falta</span><span class="pt-val" id="pt-count">—</span></div>
     </div>
     <button class="punch-btn entry" id="btn-punch" onclick="punchNow()">Entrada</button>
-    <button class="btn-ghost" id="btn-comp" style="display:none" onclick="markComp()">Marcar hoje como compensação de banco</button>
+    <button class="btn-ghost" id="btn-comp" style="display:none" onclick="markComp()">Marcar hoje como folga do banco de horas</button>
     <label class="notify-row" id="notify-row">
       <input type="checkbox" id="chk-notify" onchange="toggleNotify(this)"/>
       Avisar 10 min antes da saída e do limite de 2h&nbsp;<span id="notify-mode">(com o app aberto)</span>
@@ -568,7 +568,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Trabalhado</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Abono</div>
       <div class="leg-item"><div class="leg-dot" style="background:#2e4a75"></div>Home Office</div>
-      <div class="leg-item"><div class="leg-dot" style="background:var(--slate)"></div>Compensação</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--slate)"></div>Banco de horas</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--purple)"></div>Feriado</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Falta</div>
       <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Hoje</div>
@@ -602,7 +602,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
       <div class="type-btns">
         <button class="tbtn" data-type="worked"  onclick="setType('worked')">Trabalhado</button>
         <button class="tbtn" data-type="abono"   onclick="setType('abono')">Abono</button>
-        <button class="tbtn" data-type="comp"    onclick="setType('comp')">Compensação</button>
+        <button class="tbtn" data-type="comp"    onclick="setType('comp')">Banco de horas</button>
         <button class="tbtn" data-type="holiday" onclick="setType('holiday')">Feriado</button>
         <button class="tbtn" data-type="absent"  onclick="setType('absent')">Falta</button>
       </div>
@@ -1269,7 +1269,7 @@ function render(){
   const CFG={
     worked: {chip:'var(--green)', chipBg:'var(--green-bg)', bd:'var(--green-bd)', rowBg:'var(--row-worked)',  label:'Trabalhado'},
     abono:  {chip:'var(--blue)',  chipBg:'var(--blue-bg)',  bd:'var(--blue-bd)',  rowBg:'var(--row-abono)',   label:'Abono'},
-    comp:   {chip:'var(--slate)', chipBg:'var(--slate-bg)', bd:'var(--slate-bd)', rowBg:'rgba(100,116,139,.04)', label:'Compensação'},
+    comp:   {chip:'var(--slate)', chipBg:'var(--slate-bg)', bd:'var(--slate-bd)', rowBg:'rgba(100,116,139,.04)', label:'Banco de horas'},
     holiday:{chip:'var(--purple)',chipBg:'var(--purple-bg)',bd:'var(--purple-bd)',rowBg:'var(--row-holiday)', label:'Feriado'},
     absent: {chip:'var(--red)',   chipBg:'var(--red-bg)',   bd:'var(--red-bd)',   rowBg:'var(--row-absent)',  label:'Falta'},
     future: {chip:'var(--muted2)',chipBg:'transparent',     bd:'transparent',     rowBg:'transparent',        label:''},
@@ -1370,14 +1370,14 @@ function renderPunch(){
   }
   btn.style.display='';
   if(r&&r.type!=='worked'){
-    const lbl={abono:'Abono',holiday:'Feriado',absent:'Falta',comp:'Compensação de banco'}[r.type]||r.type;
+    const lbl={abono:'Abono',holiday:'Feriado',absent:'Falta',comp:'folga de Banco de horas'}[r.type]||r.type;
     st.textContent=`Hoje está marcado como ${lbl}`;
     btn.textContent='Editar dia'; btn.className='punch-btn edit wide';
   } else if(!r||!r.entry){
     if(hoToday){
       const cum=computeCumulative();
       if(cum>0){
-        st.innerHTML=`Home Office hoje — banco positivo (<strong>${fmtBal(cum)}</strong>): pela política, use o dia como folga de compensação`;
+        st.innerHTML=`Home Office hoje — banco positivo (<strong>${fmtBal(cum)}</strong>): pela política, use o dia como folga do banco de horas`;
         compBtn.style.display='';
       } else {
         st.textContent='Home Office hoje — QG fechado · horas extras não permitidas';
@@ -1411,10 +1411,10 @@ function renderPunch(){
 function markComp(){
   const today=todayStr();
   records=records.filter(x=>x.date!==today);
-  records.push({date:today,type:'comp',entry:null,exit:null,note:'Compensação de banco (HO)',isHO:false,u:Date.now()});
+  records.push({date:today,type:'comp',entry:null,exit:null,note:'Folga do banco de horas (HO)',isHO:false,u:Date.now()});
   records.sort((a,b)=>a.date.localeCompare(b.date));
   save(); render(); scheduleSync();
-  showToast('Dia marcado como compensação de banco');
+  showToast('Dia marcado como folga do banco de horas');
 }
 
 function punchNow(){
