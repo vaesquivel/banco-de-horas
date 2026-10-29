@@ -709,7 +709,12 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
         <li><strong style="color:var(--text)">Nos outros aparelhos:</strong> mesmo e-mail e senha, botão <strong style="color:var(--text)">Entrar</strong>.</li>
       </ol>
       <div class="field-group"><span class="field-label">E-mail</span><input type="text" id="sync-email" autocomplete="email" placeholder="voce@exemplo.com"/></div>
-      <div class="field-group"><span class="field-label">Senha</span><input type="password" id="sync-pass" autocomplete="current-password" placeholder="mínimo 6 caracteres"/></div>
+      <div class="field-group"><span class="field-label">Senha</span>
+        <div style="position:relative">
+          <input type="password" id="sync-pass" autocomplete="current-password" placeholder="mínimo 6 caracteres" style="padding-right:46px"/>
+          <button type="button" id="btn-eye" aria-label="Mostrar senha" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:8px;color:var(--muted);display:flex" onclick="toggleEye()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+      </div>
       <div id="sync-err" class="pdf-err" style="display:none"></div>
       <button class="btn-save" style="width:100%" onclick="syncSignIn(false)">Entrar</button>
       <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted)">
@@ -2235,6 +2240,14 @@ const AUTH_ERRS={
   'auth/network-request-failed':'Sem conexão com a internet'
 };
 function syncErr(msg){ const el=document.getElementById('sync-err'); el.textContent=msg; el.style.display=msg?'block':'none'; }
+function toggleEye(){
+  const i=document.getElementById('sync-pass'), b=document.getElementById('btn-eye');
+  const mostrar=i.type==='password';
+  i.type=mostrar?'text':'password';
+  const olho='<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>';
+  b.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+olho+(mostrar?'<line x1="4" y1="20" x2="20" y2="4"/>':'')+'</svg>';
+  b.setAttribute('aria-label',mostrar?'Ocultar senha':'Mostrar senha');
+}
 async function syncSignIn(create){
   if(!cloudOn()){ showToast('Sincronização indisponível — recarregue o app com internet'); return; }
   syncErr('');
