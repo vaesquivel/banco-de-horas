@@ -732,7 +732,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
         <button class="btn-save" style="flex:1;min-width:140px" onclick="syncNow(true)">Sincronizar agora</button>
         <button class="btn-cancel" style="flex:1;min-width:120px" onclick="syncSignOut()">Sair da conta</button>
       </div>
-      <p style="font-size:11px;color:var(--muted2);margin-top:12px;line-height:1.5">A foto do avatar não sincroniza — defina em cada aparelho. Sair da conta não apaga os dados deste aparelho.</p>
+      <p style="font-size:11px;color:var(--muted2);margin-top:12px;line-height:1.5">A foto do avatar também sincroniza entre os aparelhos. Sair da conta não apaga os dados deste aparelho.</p>
     </div>
     <div class="modal-actions" style="margin-top:14px"><div class="btn-row"><button class="btn-cancel" onclick="closeSync()">Fechar</button></div></div>
   </div>
@@ -1113,9 +1113,12 @@ function setPhoto(files){
       const ctx=c.getContext('2d');
       const side=Math.min(im.width,im.height);
       ctx.drawImage(im,(im.width-side)/2,(im.height-side)/2,side,side,0,0,S,S);
-      try{ localStorage.setItem(PHOTO_KEY,c.toDataURL('image/jpeg',.85)); }
+      try{
+        localStorage.setItem(PHOTO_KEY,c.toDataURL('image/jpeg',.85));
+        localStorage.setItem('bdh_photo_u',String(Date.now()));
+      }
       catch{ showToast('Não foi possível salvar a foto'); return; }
-      loadPhoto(); showToast('Foto atualizada');
+      loadPhoto(); scheduleSync(); showToast('Foto atualizada');
     };
     im.src=e.target.result;
   };
@@ -2211,12 +2214,23 @@ async function syncNow(manual){
       document.getElementById('setup-overlay').style.display='none';
     }
     applyMergedLocally(merged);
+    // foto do avatar: vence a mais recente
+    let pLocal=null,pU=0;
+    try{ pLocal=localStorage.getItem(PHOTO_KEY); pU=parseInt(localStorage.getItem('bdh_photo_u')||'0'); }catch{}
+    if(pLocal&&!pU){ pU=Date.now(); try{localStorage.setItem('bdh_photo_u',String(pU));}catch{} }
+    if(c.photo&&(c.photoU||0)>pU){
+      try{ localStorage.setItem(PHOTO_KEY,c.photo); localStorage.setItem('bdh_photo_u',String(c.photoU)); }catch{}
+      pLocal=c.photo; pU=c.photoU||0;
+      loadPhoto();
+    }
     render();
     if(setup){
       const sClean=(()=>{const s={...setup};delete s.u;return s;})();
       const cClean=c.setup?(()=>{const s={...c.setup};delete s.u;return s;})():null;
-      if(stableStr({rec:c.rec||{},setup:cClean,setupU:c.setupU||0})!==stableStr({rec:merged,setup:sClean,setupU:mSetupU})){
-        await ref.set({rec:merged,setup:sClean,setupU:mSetupU,updatedAt:Date.now()},{merge:true});
+      if(stableStr({rec:c.rec||{},setup:cClean,setupU:c.setupU||0,photoU:c.photoU||0})!==stableStr({rec:merged,setup:sClean,setupU:mSetupU,photoU:pU})){
+        const payload={rec:merged,setup:sClean,setupU:mSetupU,updatedAt:Date.now()};
+        if(pLocal&&pU>0){ payload.photo=pLocal; payload.photoU=pU; }
+        await ref.set(payload,{merge:true});
       }
     }
     lastSyncTxt='Sincronizado às '+nowHHMM();
