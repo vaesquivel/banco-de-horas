@@ -1180,6 +1180,7 @@ function computeCumulative() {
     const dow=d.getDay(); if(dow===0||dow===6)continue;
     const ds=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     const r=rmap[ds];
+    if(ds===today&&!r)continue; // hoje ainda em aberto: não conta como falta
     const autoHol=!r&&isHolidayBR(ds);
     const b=r?getBalance(r):(autoHol?0:-WORK_MIN);
     if(b!==null)total+=b;
@@ -1208,6 +1209,7 @@ function render(){
     if(ds>today)return;
     if(startDs&&ds<startDs)return; // before tracking start — don't count
     const r=rmap[ds];
+    if(ds===today&&!r)return; // hoje ainda em aberto
     const autoHol=!r&&isHolidayBR(ds);
     const type=r?.type||(autoHol?'holiday':'absent');
     const b=r?getBalance(r):(autoHol?0:-WORK_MIN);
@@ -1282,6 +1284,7 @@ function render(){
       if(ds>today)return;
       if(startDs&&ds<startDs)return;
       const r=rmap[ds];
+      if(ds===today&&!r)return; // hoje ainda em aberto
       const autoHolW=!r&&isHolidayBR(ds);
       const b=r?getBalance(r):(autoHolW?0:-WORK_MIN);
       if(b!==null)wBal+=b;
