@@ -2155,10 +2155,12 @@ function localRecMap(){
   Object.keys(t).forEach(d=>{ if(!m[d]||t[d]>=(m[d].u||0)) m[d]={del:true,date:d,u:t[d]}; });
   return m;
 }
-/* Mescla por dia: vence quem foi editado por último */
+/* Mescla por dia: vence quem foi editado por último.
+   Empate (ex.: dias importados do PDF sem carimbo, u=0): vence a nuvem (b),
+   para que todos os aparelhos convirjam para a mesma versão. */
 function mergeRecMaps(a,b){
   const out={...a};
-  Object.keys(b||{}).forEach(d=>{ const x=b[d]; if(!out[d]||(x.u||0)>(out[d].u||0)) out[d]=x; });
+  Object.keys(b||{}).forEach(d=>{ const x=b[d]; if(!out[d]||(x.u||0)>=(out[d].u||0)) out[d]=x; });
   return out;
 }
 function applyMergedLocally(m){
@@ -2230,7 +2232,9 @@ async function syncNow(manual){
       if(stableStr({rec:c.rec||{},setup:cClean,setupU:c.setupU||0,photoU:c.photoU||0})!==stableStr({rec:merged,setup:sClean,setupU:mSetupU,photoU:pU})){
         const payload={rec:merged,setup:sClean,setupU:mSetupU,updatedAt:Date.now()};
         if(pLocal&&pU>0){ payload.photo=pLocal; payload.photoU=pU; }
-        await ref.set(payload,{merge:true});
+        // mergeFields substitui cada campo inteiro (merge:true mesclava o mapa "rec" campo a campo
+        // e deixava sobras como del:true num dia recriado, que o outro aparelho lia como apagado)
+        await ref.set(payload,{mergeFields:Object.keys(payload)});
       }
     }
     lastSyncTxt='Sincronizado às '+nowHHMM();
