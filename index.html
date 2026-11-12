@@ -358,11 +358,119 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
   .punch-btn.edit.wide{width:100%;padding:15px}
 }
 
+/* ═══ TELA DE BOAS-VINDAS (dinâmica) ═══ */
+#welcome{position:fixed;inset:0;z-index:700;color:#fff;display:none;flex-direction:column;align-items:center;overflow:hidden;background:#0d1f3c;padding:max(26px,env(safe-area-inset-top)) 20px max(18px,env(safe-area-inset-bottom))}
+#welcome.open{display:flex}
+#welcome.closing .w-inner{transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .3s;transform:translateY(-70px) scale(.96)!important;opacity:0!important}
+#welcome.closing{transition:opacity .38s .08s;opacity:0}
+.w-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.w-blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55}
+.w-blob.b1{width:340px;height:340px;background:#2e4a75;top:-90px;left:-90px;animation:blob1 14s ease-in-out infinite alternate}
+.w-blob.b2{width:300px;height:300px;background:#1d6f8f;bottom:-80px;right:-100px;animation:blob2 17s ease-in-out infinite alternate}
+.w-blob.b3{width:220px;height:220px;background:#5b4a9e;top:40%;left:55%;opacity:.35;animation:blob1 20s ease-in-out infinite alternate-reverse}
+@keyframes blob1{to{transform:translate(70px,90px) scale(1.15)}}
+@keyframes blob2{to{transform:translate(-80px,-70px) scale(1.1)}}
+.w-inner{position:relative;width:100%;max-width:440px;min-height:100%;display:flex;flex-direction:column;align-items:center;gap:16px;will-change:transform}
+.w-top{width:100%;display:flex;align-items:center;justify-content:space-between}
+.w-clock{font-family:var(--mono);font-size:15px;font-weight:600;color:#dfe7f3;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:6px 12px}
+.w-sync{font-size:11px;color:#9fb0cc;display:flex;align-items:center;gap:6px}
+.w-sync i{width:7px;height:7px;border-radius:50%;background:#9fe3b9;animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(159,227,185,.6)}70%{box-shadow:0 0 0 8px rgba(159,227,185,0)}100%{box-shadow:0 0 0 0 rgba(159,227,185,0)}}
+.w-head{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:4px}
+.w-avatar{position:relative;width:88px;height:88px;border-radius:50%;background:#fff;color:#12284D;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:30px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.w-avatar::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(255,255,255,.35);animation:ring 2.4s ease-out infinite}
+@keyframes ring{from{transform:scale(.92);opacity:.9}to{transform:scale(1.18);opacity:0}}
+.w-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.w-hello{font-family:var(--display);font-size:27px;font-weight:800;letter-spacing:-.02em;text-align:center;line-height:1.15}
+.w-date{font-size:13px;color:#9fb0cc;text-transform:capitalize}
+.w-card{position:relative;width:100%;background:#fff;color:#12284D;border-radius:22px;padding:22px 20px 18px;text-align:center;box-shadow:0 18px 44px rgba(0,0,0,.35);overflow:hidden}
+.w-card::before{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-18deg);animation:shine 1.2s .9s ease both}
+@keyframes shine{from{left:-60%}to{left:130%}}
+.w-card-label{font-size:12px;font-weight:700;color:#5b6880;text-transform:uppercase;letter-spacing:.12em}
+.w-total{font-family:var(--mono);font-size:56px;font-weight:600;letter-spacing:-.02em;line-height:1.1;margin:8px 0 6px}
+.w-total.pos{color:#1f7a4d}.w-total.neg{color:#b42318}.w-total.zer{color:#475569}
+.w-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px}
+.w-pill.pos{background:#e7f6ee;color:#1f7a4d}.w-pill.neg{background:#fdf1f0;color:#b42318}.w-pill.zer{background:#f1f4f8;color:#475569}
+.w-since{font-size:11px;color:#9aa4b5;margin-top:8px}
+.w-today{width:100%;display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:14px 16px}
+.w-ring{position:relative;width:76px;height:76px;flex-shrink:0}
+.w-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.w-ring circle{fill:none;stroke-width:7}
+.w-ring .trk{stroke:rgba(255,255,255,.14)}
+.w-ring .bar{stroke:#9fe3b9;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1),stroke .3s}
+.w-ring-txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px;font-weight:600}
+.w-today-info{flex:1;min-width:0;text-align:left}
+.w-today-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#8fa2c0;font-weight:700}
+.w-today-main{font-size:15px;font-weight:700;margin-top:3px;line-height:1.35}
+.w-today-sub{font-size:12px;color:#b9c6dc;margin-top:2px;line-height:1.4}
+.w-mini{display:flex;gap:10px;width:100%}
+.w-mini>div{flex:1;min-width:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:11px 10px;text-align:center}
+.w-mini-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#8fa2c0;font-weight:600}
+.w-mini-val{font-family:var(--mono);font-size:18px;font-weight:600;margin-top:4px;white-space:nowrap}
+.w-mini-val.pos{color:#9fe3b9}.w-mini-val.neg{color:#ffa497}
+.w-actions{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:auto}
+.w-btn{position:relative;overflow:hidden;width:100%;border:none;border-radius:16px;padding:17px;font-family:var(--sans);font-size:16px;font-weight:700;cursor:pointer;background:#fff;color:#12284D;box-shadow:0 10px 28px rgba(0,0,0,.3);-webkit-tap-highlight-color:transparent;transition:transform .12s}
+.w-btn:active{transform:scale(.97)}
+.w-ripple{position:absolute;border-radius:50%;background:rgba(18,40,77,.18);transform:scale(0);animation:rip .55s ease-out;pointer-events:none}
+@keyframes rip{to{transform:scale(4);opacity:0}}
+.w-swipe{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;color:#9fb0cc;padding:6px 0 2px;cursor:pointer;background:none;border:none;font-family:var(--sans);width:100%}
+.w-swipe .chev{width:22px;height:22px;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+#welcome.open .w-in{opacity:0;transform:translateY(22px);animation:wUp .6s cubic-bezier(.2,.8,.2,1) forwards}
+#welcome.open .w-avatar.w-in{transform:scale(.6);animation-name:wPop}
+@keyframes wUp{to{opacity:1;transform:none}}
+@keyframes wPop{60%{opacity:1;transform:scale(1.07)}to{opacity:1;transform:none}}
+@media(max-height:720px){.w-total{font-size:46px}.w-avatar{width:68px;height:68px;font-size:24px}.w-inner{gap:11px}.w-hello{font-size:23px}}
+@media(prefers-reduced-motion:reduce){#welcome *,#welcome *::before,#welcome *::after{animation:none!important;transition:none!important}#welcome.open .w-in{opacity:1;transform:none}}
 </style>
 </head>
 <body>
 
 <div id="toast"></div>
+
+<!-- ── TELA DE BOAS-VINDAS ── -->
+<div id="welcome">
+  <div class="w-bg"><div class="w-blob b1"></div><div class="w-blob b2"></div><div class="w-blob b3"></div></div>
+  <div class="w-inner" id="w-inner">
+    <div class="w-top w-in" style="animation-delay:.05s">
+      <span class="w-clock" id="w-clock">--:--</span>
+      <span class="w-sync" id="w-sync"><i></i><span id="w-sync-txt">Atualizado</span></span>
+    </div>
+    <div class="w-head">
+      <div class="w-avatar w-in" style="animation-delay:.12s"><span id="w-initials">?</span><img id="w-img" alt="" style="display:none"/></div>
+      <div class="w-hello w-in" id="w-hello" style="animation-delay:.22s">Olá!</div>
+      <div class="w-date w-in" id="w-date" style="animation-delay:.28s">—</div>
+    </div>
+    <div class="w-card w-in" style="animation-delay:.36s">
+      <div class="w-card-label">Meu saldo de horas</div>
+      <div class="w-total" id="w-total">+00:00</div>
+      <span class="w-pill" id="w-pill">—</span>
+      <div class="w-since" id="w-since">—</div>
+    </div>
+    <div class="w-today w-in" style="animation-delay:.46s">
+      <div class="w-ring">
+        <svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="34"/><circle class="bar" id="w-ring-bar" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="213.6"/></svg>
+        <div class="w-ring-txt" id="w-ring-txt">0%</div>
+      </div>
+      <div class="w-today-info">
+        <div class="w-today-title">Hoje</div>
+        <div class="w-today-main" id="w-today-main">—</div>
+        <div class="w-today-sub" id="w-today-sub"></div>
+      </div>
+    </div>
+    <div class="w-mini w-in" style="animation-delay:.54s">
+      <div><div class="w-mini-label" id="w-month-label">Este mês</div><div class="w-mini-val" id="w-month">—</div></div>
+      <div><div class="w-mini-label">Esta semana</div><div class="w-mini-val" id="w-week">—</div></div>
+    </div>
+    <div class="w-actions w-in" style="animation-delay:.62s">
+      <button class="w-btn" id="w-punch" onclick="welcomePunch(event)">Registrar entrada</button>
+      <button class="w-swipe" onclick="closeWelcome()">
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>
+        Deslize para cima para ver seus registros
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ── SETUP OVERLAY ── -->
 <div id="setup-overlay">
@@ -546,7 +654,7 @@ input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(18,40,77,.1)}
 
   <div id="balance-cards">
     <div class="bal-card" id="card-total">
-      <div class="bc-label">Banco Acumulado</div>
+      <div class="bc-label">Saldo geral</div>
       <div class="bc-value" id="val-total">—</div>
       <div class="bc-sub" id="card-total-sub">—</div>
     </div>
@@ -1153,6 +1261,7 @@ function checkAndInit() {
   } else {
     document.getElementById('setup-overlay').style.display='none';
     applySetup(); load(); render();
+    openWelcome();
   }
 }
 
@@ -1341,7 +1450,150 @@ function render(){
 
   renderPunch();
   checkBackupHint();
+  renderWelcome();
 }
+
+/* ── TELA DE BOAS-VINDAS ── */
+function balanceBetween(fromDs,toDs){
+  const rmap=getRMap(records), today=todayStr(), startDs=setup?.startDate;
+  let t=0;
+  for(let d=new Date(fromDs+'T12:00:00'), e=new Date(toDs+'T12:00:00'); d<=e; d.setDate(d.getDate()+1)){
+    if(d.getDay()%6===0)continue;
+    const ds=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    if(ds>today||(startDs&&ds<startDs))continue;
+    const r=rmap[ds];
+    if(ds===today&&!r)continue;
+    const b=r?getBalance(r):(isHolidayBR(ds)?0:-WORK_MIN);
+    if(b!==null)t+=b;
+  }
+  return t;
+}
+const dsOf=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+let wAnim=null, wShown=null, wTick=null;
+function animateTotal(to){
+  const el=document.getElementById('w-total');
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const from=wShown===null?0:wShown;
+  cancelAnimationFrame(wAnim);
+  if(reduce||from===to){ el.textContent=fmtBal(to); wShown=to; return; }
+  const t0=performance.now(), dur=1100;
+  const step=now=>{
+    const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,3);
+    el.textContent=fmtBal(Math.round(from+(to-from)*e));
+    if(k<1) wAnim=requestAnimationFrame(step); else wShown=to;
+  };
+  wAnim=requestAnimationFrame(step);
+}
+function setMini(id,v){ const el=document.getElementById(id); el.textContent=fmtBal(v); el.className='w-mini-val '+(v>0?'pos':v<0?'neg':''); }
+function renderWelcomeToday(){
+  const today=todayStr(), r=records.find(x=>x.date===today), dow=new Date().getDay();
+  const now=toMin(nowHHMM());
+  let pct=0, main='', sub='', color='#9fe3b9', txt='';
+  if(dow===0||dow===6){ main='Fim de semana'; sub='Bom descanso!'; txt='—'; }
+  else if(!r&&getHolidayName(today)){ main=`Feriado: ${getHolidayName(today)}`; sub='Aproveite o dia'; txt='—'; }
+  else if(r&&r.type!=='worked'){ main={abono:'Abono',holiday:'Feriado',absent:'Falta',comp:'Folga do banco de horas'}[r.type]||r.type; sub='Dia já marcado'; pct=(r.type==='abono'||r.type==='holiday')?1:0; txt=pct?'✓':'—'; }
+  else if(!r||!r.entry){ main='Você ainda não registrou hoje'; sub=`Jornada prevista: ${setup.entryTime} → ${setup.exitTime}`; txt='0%'; }
+  else if(!r.exit){
+    const worked=Math.max(0,now-toMin(r.entry)), exitN=toMin(r.entry)+WORK_MIN;
+    pct=Math.min(1,worked/WORK_MIN);
+    main=`Trabalhando desde ${r.entry}`;
+    if(now<exitN) sub=`Faltam ${fmtWorked(exitN-now)} · saída prevista ${fmtWorked(exitN)}`;
+    else { sub=`+${fmtWorked(now-exitN)} extra · limite 2h às ${fmtWorked(exitN+120)}`; color='#ffd27a'; }
+    if(now>=exitN+120) color='#ffa497';
+    txt=Math.round(pct*100)+'%';
+  } else {
+    const b=getBalance(r); pct=Math.min(1,getWorked(r)/WORK_MIN);
+    main=`Dia completo · ${r.entry} → ${r.exit}`; sub=`Saldo do dia ${fmtBal(b)}`; txt='✓';
+    if(b<0) color='#ffa497';
+  }
+  document.getElementById('w-today-main').textContent=main;
+  document.getElementById('w-today-sub').textContent=sub;
+  document.getElementById('w-ring-txt').textContent=txt;
+  const bar=document.getElementById('w-ring-bar');
+  bar.style.stroke=color;
+  bar.style.strokeDashoffset=String(213.6*(1-pct));
+  // botão de ponto espelha o cartão principal
+  const pb=document.getElementById('btn-punch'), wb=document.getElementById('w-punch');
+  const lbl=pb.textContent.trim();
+  wb.style.display=pb.style.display==='none'?'none':'';
+  wb.textContent=lbl==='Entrada'?'Registrar entrada':lbl==='Saída'?'Registrar saída':lbl;
+}
+function renderWelcome(){
+  const w=document.getElementById('welcome');
+  if(!setup||!w.classList.contains('open'))return;
+  const first=(setup.name||'').trim().split(/\s+/)[0]||'';
+  const d=new Date();
+  document.getElementById('w-hello').textContent=`${greetingWord()}, ${first}`;
+  document.getElementById('w-date').textContent=d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+  document.getElementById('w-clock').textContent=nowHHMM();
+  let ph=null; try{ph=localStorage.getItem(PHOTO_KEY);}catch{}
+  const img=document.getElementById('w-img'), ini=document.getElementById('w-initials');
+  if(ph){ img.src=ph; img.style.display=''; ini.style.display='none'; }
+  else { img.style.display='none'; ini.style.display=''; ini.textContent=(first[0]||'?').toUpperCase(); }
+  const cum=computeCumulative();
+  const cls=cum>0?'pos':cum<0?'neg':'zer';
+  document.getElementById('w-total').className='w-total '+cls;
+  const pill=document.getElementById('w-pill');
+  pill.className='w-pill '+cls;
+  pill.textContent=cum>0?'▲ Horas positivas':cum<0?'▼ Horas negativas':'Saldo zerado';
+  const[sy,sm,sd]=setup.startDate.split('-');
+  const obTxt=setup.openingBalance?` · saldo inicial ${fmtBal(setup.openingBalance)}`:'';
+  document.getElementById('w-since').textContent=`contado desde ${sd}/${sm}/${sy}${obTxt}`;
+  animateTotal(cum);
+  const today=todayStr();
+  document.getElementById('w-month-label').textContent=MONTHS[d.getMonth()];
+  setMini('w-month',balanceBetween(dsOf(new Date(d.getFullYear(),d.getMonth(),1)),today));
+  const mon=new Date(d); mon.setDate(d.getDate()-((d.getDay()+6)%7));
+  setMini('w-week',balanceBetween(dsOf(mon),today));
+  const st=document.getElementById('w-sync'), stt=document.getElementById('w-sync-txt');
+  if(typeof fbUser!=='undefined'&&fbUser){ st.style.display=''; stt.textContent=lastSyncTxt||'Sincronizando…'; } else st.style.display='none';
+  renderWelcomeToday();
+}
+function openWelcome(){
+  if(!setup)return;
+  const w=document.getElementById('welcome'), inner=document.getElementById('w-inner');
+  w.classList.remove('closing'); inner.style.transform=''; inner.style.opacity='';
+  wShown=null;
+  w.classList.remove('open'); void w.offsetWidth; w.classList.add('open');
+  document.body.style.overflow='hidden';
+  renderPunch(); renderWelcome();
+  clearInterval(wTick);
+  wTick=setInterval(()=>{ if(!w.classList.contains('open')){clearInterval(wTick);return;} document.getElementById('w-clock').textContent=nowHHMM(); renderPunch(); renderWelcomeToday(); },20000);
+}
+function closeWelcome(){
+  const w=document.getElementById('welcome');
+  if(!w.classList.contains('open')||w.classList.contains('closing'))return;
+  try{navigator.vibrate&&navigator.vibrate(8);}catch{}
+  w.classList.add('closing');
+  setTimeout(()=>{ w.classList.remove('open','closing'); const i=document.getElementById('w-inner'); i.style.transform=''; i.style.opacity=''; document.body.style.overflow=''; clearInterval(wTick); },420);
+}
+function welcomePunch(ev){
+  const b=ev.currentTarget, r=b.getBoundingClientRect(), s=document.createElement('span');
+  const size=Math.max(r.width,r.height);
+  s.className='w-ripple'; s.style.width=s.style.height=size+'px';
+  s.style.left=(ev.clientX-r.left-size/2)+'px'; s.style.top=(ev.clientY-r.top-size/2)+'px';
+  b.appendChild(s); setTimeout(()=>s.remove(),600);
+  try{navigator.vibrate&&navigator.vibrate(15);}catch{}
+  const lbl=document.getElementById('btn-punch').textContent.trim();
+  if(lbl==='Entrada'||lbl==='Saída'){ punchNow(); setTimeout(renderWelcome,50); }
+  else { closeWelcome(); setTimeout(punchNow,430); }
+}
+// deslizar para cima fecha a tela
+(function(){
+  const w=document.getElementById('welcome'), inner=document.getElementById('w-inner');
+  let y0=null, dy=0;
+  w.addEventListener('touchstart',e=>{ if(e.target.closest('.w-btn'))return; y0=e.touches[0].clientY; dy=0; inner.style.transition='none'; },{passive:true});
+  w.addEventListener('touchmove',e=>{ if(y0===null)return; dy=Math.min(0,e.touches[0].clientY-y0); inner.style.transform=`translateY(${dy*0.6}px)`; inner.style.opacity=String(Math.max(.3,1+dy/500)); },{passive:true});
+  w.addEventListener('touchend',()=>{ if(y0===null)return; inner.style.transition=''; y0=null;
+    if(dy<-90){ closeWelcome(); } else { inner.style.transform=''; inner.style.opacity=''; } });
+  w.addEventListener('wheel',e=>{ if(e.deltaY>30) closeWelcome(); },{passive:true});
+})();
+// reabre ao voltar ao app depois de 15 min fora
+let hiddenAt=0;
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){ hiddenAt=Date.now(); return; }
+  if(hiddenAt&&Date.now()-hiddenAt>15*60*1000) openWelcome();
+});
 
 /* ── BATER PONTO ── */
 function nowHHMM(){ const d=new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
@@ -1774,10 +2026,10 @@ function importBackupJson(){
 }
 
 /* ── IMPORTAR RH (a qualquer momento, em lote) ── */
-let pendingRHRecords=[];
+let pendingRHRecords=[], rhAnchor=null;
 
 function showRHImport(){
-  pendingRHRecords=[];
+  pendingRHRecords=[]; rhAnchor=null;
   document.getElementById('rh-err').style.display='none';
   document.getElementById('rh-summary').style.display='none';
   document.getElementById('btn-rh-confirm').style.display='none';
@@ -1804,6 +2056,10 @@ async function handleRHFiles(files){
       result.records.forEach(r=>{
         if(!pendingRHRecords.find(x=>x.date===r.date)) pendingRHRecords.push(r);
       });
+      // guarda o ponto de partida oficial do PDF mais recente (saldo anterior + início do período)
+      if(result.periodoStart&&result.saldoAnteriorMin!==null&&(!rhAnchor||result.periodoStart>rhAnchor.start)){
+        rhAnchor={start:result.periodoStart,ob:result.saldoAnteriorMin,end:result.periodoEnd,atual:result.saldoAtualMin};
+      }
     }
     pendingRHRecords.sort((a,b)=>a.date.localeCompare(b.date));
     updateRHSummary();
@@ -1829,21 +2085,38 @@ function updateRHSummary(){
   const first=pendingRHRecords[0].date.split('-').reverse().join('/');
   const last =pendingRHRecords[pendingRHRecords.length-1].date.split('-').reverse().join('/');
   el.style.display='block';
+  const fmtD=ds=>ds.split('-').reverse().join('/');
+  const anchorHTML=rhAnchor?
+    `<label style="display:flex;gap:10px;align-items:flex-start;margin-top:12px;padding:12px;border:1.5px solid var(--green-bd);background:var(--green-bg);border-radius:10px;cursor:pointer;line-height:1.45">
+      <input type="checkbox" id="rh-anchor-chk" checked style="width:18px;height:18px;margin-top:2px;accent-color:var(--accent);flex-shrink:0"/>
+      <span><strong>Acertar meu saldo geral com o RH</strong><br>
+      O saldo passa a contar a partir de <strong>${fmtD(rhAnchor.start)}</strong> com o saldo oficial do RH de <strong>${fmtBal(rhAnchor.ob)}</strong>.
+      Dias anteriores ficam guardados, mas não entram mais na conta.</span>
+    </label>`:'';
   el.innerHTML=`<strong>${pendingRHRecords.length} dias encontrados</strong> (${first} → ${last})<br>`+
     `<strong>${news.length}</strong> serão adicionados`+
-    (dup>0?` · · ${dup} já registrados serão mantidos como estão`:'');
-  document.getElementById('btn-rh-confirm').style.display=news.length?'':'none';
+    (dup>0?` · ${dup} já registrados serão mantidos como estão`:'')+anchorHTML;
+  document.getElementById('btn-rh-confirm').style.display=(news.length||rhAnchor)?'':'none';
 }
 
 function confirmRHImport(){
   const existing=new Set(records.map(r=>r.date));
   const news=pendingRHRecords.filter(r=>!existing.has(r.date));
-  if(!news.length){ showToast('Nada novo para importar'); return; }
+  const chk=document.getElementById('rh-anchor-chk');
+  const useAnchor=!!(rhAnchor&&chk&&chk.checked);
+  if(!news.length&&!useAnchor){ showToast('Nada novo para importar'); return; }
   const stamped=news.map(r=>({...r,u:Date.now()}));
   records=[...records,...stamped].sort((a,b)=>a.date.localeCompare(b.date));
+  if(useAnchor){
+    setup.startDate=rhAnchor.start; setup.openingBalance=rhAnchor.ob; setup.u=Date.now();
+    try{localStorage.setItem(SETUP_KEY,JSON.stringify(setup));}catch{}
+    applySetup();
+  }
   save(); render(); scheduleSync();
   document.getElementById('rhimport-overlay').classList.remove('open');
-  showToast(`${news.length} dias importados do RH`);
+  showToast(useAnchor?`Saldo geral acertado com o RH · ${fmtBal(computeCumulative())}`:`${news.length} dias importados do RH`);
+  rhAnchor=null;
+  if(useAnchor) setTimeout(openWelcome,500);
 }
 
 function rhError(msg){
@@ -2071,7 +2344,18 @@ function parseSunsetCliffItems(items) {
   });
 
   records.sort((a,b)=>a.date.localeCompare(b.date));
-  return { records, saldoAtual, periodoEnd };
+
+  // Saldos oficiais do RH (texto corrido do PDF): Anterior · Período · Atual, nessa ordem
+  const full = rows.map(r=>r.map(i=>i.str).join(' ')).join('\n');
+  const toRHMin = m => { const v=parseInt(m[1])*60+parseInt(m[2]); return /COMPENSAR/i.test(m[3])?v:-v; };
+  const saldos = [...full.matchAll(/(\d+):(\d{2})\s*\(\s*(A\s+COMPENSAR|A\s+PAGAR|[^)]{0,20})\s*\)/gi)];
+  const pr = full.match(/(\d{2})\/(\d{2})\/(\d{4})\s+[àa]\s+(\d{2})\/(\d{2})\/(\d{4})/);
+  const periodoStart = pr ? `${pr[3]}-${pr[2]}-${pr[1]}` : null;
+  if(pr && !periodoEnd) periodoEnd = `${pr[6]}-${pr[5]}-${pr[4]}`;
+  const saldoAnteriorMin = saldos.length>=3 ? toRHMin(saldos[0]) : null;
+  const saldoAtualMin    = saldos.length>=3 ? toRHMin(saldos[2]) : null;
+
+  return { records, saldoAtual, periodoEnd, periodoStart, saldoAnteriorMin, saldoAtualMin };
 }
 
 function showPDFResult(recs, numFiles) {
