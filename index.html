@@ -2598,6 +2598,9 @@ function updateSyncUI(){
     out.style.display='block'; inn.style.display='none';
     if(btn)btn.textContent='Sincronizar';
   }
+  // tela de boas-vindas: mostra o resultado da sincronização assim que ela termina
+  const ws=document.getElementById('w-sync'), wst=document.getElementById('w-sync-txt');
+  if(ws&&wst){ ws.style.display=fbUser?'':'none'; if(fbUser) wst.textContent=lastSyncTxt||'Sincronizando…'; }
 }
 
 /* ── SERVICE WORKER ── */
